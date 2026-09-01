@@ -818,6 +818,20 @@ python3 -m compileall app -q
 python3 -m pytest -q
 ```
 
+RAG 评测入口已经接入 100 条中文 case，默认数据集是 `app/rag_eval/alert_eval_cases_zh.json`。生产评测走 MySQL 中的 `KnowledgeChunk`：
+
+```bash
+python3 -m app.rag_eval.runner
+```
+
+如果本地没有启动 MySQL，只想先验证评测指标计算和 case 格式，可以使用 mock 知识库模式：
+
+```bash
+RAG_EVAL_MOCK_KNOWLEDGE=true python3 -m app.rag_eval.runner
+```
+
+评测报告会写入 `target/rag-eval-report.json`。mock 模式会根据 case 的 `expectedDocs` 生成临时知识文档，所以指标可能非常高；真实生产评测应该接入企业知识库、接口文档、SOP 和历史故障复盘后再看数值。
+
 当前未配置 MySQL 测试库时，纯函数测试会通过，MySQL 集成测试会跳过。要跑完整集成测试，先准备测试库，然后执行：
 
 ```bash

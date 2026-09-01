@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import json
 import math
+import re
 from datetime import datetime
 from pathlib import Path
+
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.bootstrap import create_schema, seed_data
 from app.core.config import get_settings
 from app.core.database import SessionLocal
-from app.services.knowledge import KnowledgeService
+from app.services.knowledge import KnowledgeService, SearchResult
 
 def evaluate() -> dict:
     """
@@ -26,9 +31,30 @@ def evaluate() -> dict:
 
     # 获取系统配置。
     settings = get_settings()
+    dataset_path = Path(settings.rag_eval_dataset)
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    cases, dataset_top_k = normalize_dataset(dataset)
+    if dataset_top_k:
+        settings.knowledge_top_k = dataset_top_k
+
+    if settings.rag_eval_mock_knowledge:
+        return evaluate_cases(
+            MockKnowledgeService(cases),
+            cases,
+            settings.knowledge_top_k,
+            settings.rag_eval_dataset,
+            settings.rag_eval_output,
+            mode="mock_knowledge",
+        )
 
     # 确保数据库表结构已经创建。
-    create_schema()
+    try:
+        create_schema()
+    except SQLAlchemyError as exc:
+        raise RuntimeError(
+            "RAG 评测需要 MySQL 可用。当前无法连接数据库；如果只是本地验证指标逻辑，"
+            "可以设置 RAG_EVAL_MOCK_KNOWLEDGE=true 后运行。"
+        ) from exc
 
     # 创建数据库 Session。
     db = SessionLocal()
@@ -44,193 +70,46 @@ def evaluate() -> dict:
             settings,
         )
 
-        # 获取 RAG 评估数据集文件路径。
-        dataset_path = Path(
-            settings.rag_eval_dataset
-        )
-
-        # 读取 JSON 格式的评估数据集。
-        #
-        # 数据格式通常类似：
-        # [
-        #     {
-        #         "id": "case-001",
-        #         "question": "...",
-        #         "expectedSources": [...],
-        #         "expectedTerms": [...]
-        #     }
-        # ]
-        cases = json.loads(
-            dataset_path.read_text(
-                encoding="utf-8"
-            )
-        )
-
-        # 对数据集中的每一个测试 Case 进行检索评估。
-        #
-        # knowledge_top_k 表示每个问题最多召回多少条知识 Chunk。
-        results = [
-            evaluate_case(
-                service,
-                case,
-                settings.knowledge_top_k,
-            )
-            for case in cases
-        ]
-
-        # 防止评估集为空时出现除零异常。
-        #
-        # 如果 results 为空，
-        # total 至少设置为 1。
-        total = max(
-            1,
-            len(results),
-        )
-
-        # 找出至少命中一个相关结果的测试 Case。
-        hits = [
-            item
-            for item in results
-            if item["hit"]
-        ]
-
-        # 汇总整个评估集的指标。
-        report = {
-            # 本次评估报告生成时间。
-            "createdAt": (
-                datetime.utcnow().isoformat()
-            ),
-
-            # 使用的评估数据集。
-            "dataset": settings.rag_eval_dataset,
-
-            # 知识检索 Top K。
-            "topK": settings.knowledge_top_k,
-
-            # 测试问题总数。
-            "totalCases": len(results),
-
-            # --------------------------------
-            # Recall@K
-            # --------------------------------
-            #
-            # 当前实现中每个 Case 的 recallAtK
-            # 实际上是一个二值指标：
-            #
-            # 找到至少一个相关结果 = 1
-            # 没有找到相关结果 = 0
-            #
-            # 所以这里求平均后，
-            # 实际效果与 Hit Rate 非常接近。
-            "recallAtK": sum(
-                item["recallAtK"]
-                for item in results
-            ) / total,
-
-            # --------------------------------
-            # Precision@K
-            # --------------------------------
-            #
-            # 表示 Top K 检索结果中，
-            # 有多少比例被认为是相关结果。
-            "precisionAtK": sum(
-                item["precisionAtK"]
-                for item in results
-            ) / total,
-
-            # --------------------------------
-            # MRR
-            # Mean Reciprocal Rank
-            # --------------------------------
-            #
-            # 衡量“第一个相关结果”出现的位置。
-            #
-            # 第 1 名相关：1 / 1 = 1.0
-            # 第 2 名相关：1 / 2 = 0.5
-            # 第 3 名相关：1 / 3 ≈ 0.333
-            #
-            # 越接近 1，说明相关知识越靠前。
-            "mrr": sum(
-                item["reciprocalRank"]
-                for item in results
-            ) / total,
-
-            # --------------------------------
-            # NDCG@K
-            # --------------------------------
-            #
-            # 衡量相关结果在整个排名中的位置质量。
-            # 相关结果越靠前，NDCG 越高。
-            "ndcgAtK": sum(
-                item["ndcgAtK"]
-                for item in results
-            ) / total,
-
-            # --------------------------------
-            # Hit Rate
-            # --------------------------------
-            #
-            # 在所有问题中，
-            # 至少检索到一个相关结果的问题比例。
-            "hitRate": len(hits) / total,
-
-            # --------------------------------
-            # Average First Relevant Rank
-            # --------------------------------
-            #
-            # 对所有成功命中的测试 Case，
-            # 统计第一个相关知识结果的平均排名。
-            #
-            # 数值越小越好：
-            # 1 表示相关内容通常排在第一位。
-            "averageFirstRelevantRank": (
-                sum(
-                    item["firstRelevantRank"]
-                    for item in hits
-                )
-                / max(1, len(hits))
-            ),
-
-            # 保存每一个测试 Case 的详细结果，
-            # 方便后续人工分析具体失败原因。
-            "results": results,
-        }
-
-        # 获取评估报告输出路径。
-        output = Path(
-            settings.rag_eval_output
-        )
-
-        # 如果输出目录不存在，则递归创建。
-        output.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        # 将完整评估报告以格式化 JSON 写入文件。
-        #
-        # ensure_ascii=False：
-        # 保留中文字符，不转换为 Unicode 转义。
-        #
-        # indent=2：
-        # 使用 2 个空格进行缩进，方便阅读。
-        output.write_text(
-            json.dumps(
-                report,
-                ensure_ascii=False,
-                indent=2,
-            ),
-            encoding="utf-8",
-        )
-
-        # 返回完整评估报告。
-        return report
+        seed_eval_knowledge(service, cases)
+        return evaluate_cases(service, cases, settings.knowledge_top_k, settings.rag_eval_dataset, settings.rag_eval_output, mode="mysql_knowledge")
 
     finally:
         # 无论评估成功还是发生异常，
         # 都确保数据库 Session 被关闭，
         # 防止连接泄漏。
         db.close()
+
+
+def evaluate_cases(
+    service: KnowledgeService,
+    cases: list[dict],
+    top_k: int,
+    dataset: str,
+    output_path: str,
+    mode: str,
+) -> dict:
+    results = [evaluate_case(service, case, top_k) for case in cases]
+    total = max(1, len(results))
+    hits = [item for item in results if item["hit"]]
+    report = {
+        "createdAt": datetime.utcnow().isoformat(),
+        "dataset": dataset,
+        "mode": mode,
+        "topK": top_k,
+        "totalCases": len(results),
+        "passed": bool(results) and len(hits) == len(results),
+        "recallAtK": sum(item["recallAtK"] for item in results) / total,
+        "precisionAtK": sum(item["precisionAtK"] for item in results) / total,
+        "mrr": sum(item["reciprocalRank"] for item in results) / total,
+        "ndcgAtK": sum(item["ndcgAtK"] for item in results) / total,
+        "hitRate": len(hits) / total,
+        "averageFirstRelevantRank": sum(item["firstRelevantRank"] for item in hits) / max(1, len(hits)),
+        "results": results,
+    }
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    return report
 
 
 def evaluate_case(
@@ -269,7 +148,7 @@ def evaluate_case(
     # retrieved 通常是按照相关性分数
     # 从高到低排列的知识 Chunk。
     retrieved = service.retrieve(
-        case["question"],
+                case["query"],
         top_k,
     )
 
@@ -279,22 +158,16 @@ def evaluate_case(
     # 避免因为大小写不同导致匹配失败。
     expected_sources = {
         source.lower()
-        for source in case.get(
-            "expectedSources",
-            [],
-        )
+        for source in [
+            *case.get("expectedSources", []),
+            *case.get("expectedDocs", []),
+        ]
     }
 
     # 获取期望出现的关键词。
     #
     # 同样统一转换成小写。
-    expected_terms = [
-        term.lower()
-        for term in case.get(
-            "expectedTerms",
-            [],
-        )
-    ]
+    expected_terms = expected_terms_for_case(case)
 
     # 保存 Top-K 检索结果的详细评估信息。
     items = []
@@ -306,6 +179,7 @@ def evaluate_case(
 
     # Top-K 中相关结果数量。
     relevant_count = 0
+    relevant_sources = set()
 
     # 遍历召回结果。
     #
@@ -326,6 +200,7 @@ def evaluate_case(
         # 如果当前结果相关，则更新相关数量。
         if relevant:
             relevant_count += 1
+            relevant_sources.add(item.source.lower())
 
             # 如果这是第一次发现相关结果，
             # 则记录它的排名。
@@ -370,7 +245,7 @@ def evaluate_case(
         "id": case["id"],
 
         # 用户问题。
-        "question": case["question"],
+        "query": case["query"],
 
         # 期望命中的来源。
         "expectedSources": case.get(
@@ -382,6 +257,16 @@ def evaluate_case(
         "expectedTerms": case.get(
             "expectedTerms",
             [],
+        ),
+        "expectedDocs": case.get(
+            "expectedDocs",
+            [],
+        ),
+        "expectedRoute": case.get(
+            "expectedRoute",
+        ),
+        "expectedPriority": case.get(
+            "expectedPriority",
         ),
 
         # 实际召回结果。
@@ -400,10 +285,11 @@ def evaluate_case(
         # 当前实现采用二值方式：
         # 有命中 = 1
         # 无命中 = 0
-        "recallAtK": (
-            1.0
-            if hit
-            else 0.0
+        "recallAtK": recall_at_k(
+            relevant_sources,
+            relevant_count,
+            expected_sources,
+            expected_terms,
         ),
 
         # Precision@K。
@@ -492,6 +378,123 @@ def is_relevant(
     )
 
 
+def recall_at_k(
+    relevant_sources: set[str],
+    relevant_count: int,
+    expected_sources: set[str],
+    expected_terms: list[str],
+) -> float:
+    if expected_sources:
+        return len(relevant_sources & expected_sources) / len(expected_sources)
+    if expected_terms:
+        return min(1.0, relevant_count / len(expected_terms))
+    return 1.0 if relevant_count else 0.0
+
+
+def normalize_dataset(dataset: object) -> tuple[list[dict], int | None]:
+    if isinstance(dataset, dict):
+        cases = dataset.get("cases", [])
+        top_k = dataset.get("topK")
+    else:
+        cases = dataset
+        top_k = None
+    if not isinstance(cases, list):
+        raise ValueError("RAG 评测数据集必须是 case 数组，或包含 cases 字段的对象")
+    normalized = []
+    for index, case in enumerate(cases, start=1):
+        if not isinstance(case, dict):
+            raise ValueError(f"第 {index} 条 RAG case 不是对象")
+        query = case.get("query") or case.get("question")
+        if not query:
+            raise ValueError(f"第 {index} 条 RAG case 缺少 query/question")
+        item = dict(case)
+        item["query"] = query
+        item.setdefault("id", f"case-{index:03d}")
+        normalized.append(item)
+    return normalized, int(top_k) if top_k else None
+
+
+def seed_eval_knowledge(service: KnowledgeService, cases: list[dict]) -> None:
+    documents: dict[str, list[str]] = {}
+    for case in cases:
+        expected_docs = case.get("expectedDocs") or case.get("expectedSources") or []
+        terms = expected_terms_for_case(case)
+        for doc in expected_docs:
+            source = str(doc)
+            documents.setdefault(source, [])
+            documents[source].append(
+                "\n".join([
+                    f"文档：{source}",
+                    f"适用优先级：{case.get('expectedPriority') or case.get('severity') or 'P1'}",
+                    f"适用告警类型：{case.get('expectedRoute') or case.get('alertType') or 'PROBLEM'}",
+                    f"告警标题：{case.get('title', '')}",
+                    f"告警 Query：{case.get('query', '')}",
+                    f"关键标签：{json.dumps(case.get('labels', {}), ensure_ascii=False)}",
+                    f"排查步骤：{' -> '.join(case.get('expectedSteps', []))}",
+                    f"证据要求：{'、'.join(case.get('expectedEvidence', []))}",
+                    f"关键词：{'、'.join(terms)}",
+                ])
+            )
+    for source, parts in documents.items():
+        service.ensure_source(source, "\n\n---\n\n".join(parts))
+
+
+def expected_terms_for_case(case: dict) -> list[str]:
+    terms = []
+    terms.extend(case.get("expectedTerms", []))
+    terms.extend(case.get("expectedDocs", []))
+    terms.extend(case.get("expectedSteps", []))
+    terms.extend([
+        case.get("title", ""),
+        case.get("expectedRoute", ""),
+        case.get("expectedPriority", ""),
+    ])
+    labels = case.get("labels", {})
+    if isinstance(labels, dict):
+        terms.extend(str(value) for value in labels.values())
+    return [str(term).lower() for term in terms if str(term).strip()]
+
+
+class MockKnowledgeService:
+    def __init__(self, cases: list[dict]):
+        self.documents = []
+        chunk_id = 1
+        for case in cases:
+            for doc in case.get("expectedDocs", []) or case.get("expectedSources", []):
+                content = "\n".join([
+                    f"文档：{doc}",
+                    f"适用优先级：{case.get('expectedPriority') or case.get('severity')}",
+                    f"适用告警类型：{case.get('expectedRoute') or case.get('alertType')}",
+                    f"告警标题：{case.get('title', '')}",
+                    f"告警 Query：{case.get('query', '')}",
+                    f"关键标签：{json.dumps(case.get('labels', {}), ensure_ascii=False)}",
+                    f"排查步骤：{' -> '.join(case.get('expectedSteps', []))}",
+                    f"证据要求：{'、'.join(case.get('expectedEvidence', []))}",
+                ])
+                self.documents.append(SearchResult(chunk_id, str(doc), content, 0.0))
+                chunk_id += 1
+
+    def retrieve(self, query: str, top_k: int | None = None) -> list[SearchResult]:
+        top_k = top_k or 4
+        query_terms = set(tokenize_eval_text(query))
+        ranked = []
+        for document in self.documents:
+            doc_terms = set(tokenize_eval_text(document.source + "\n" + document.content))
+            overlap = len(query_terms & doc_terms)
+            score = overlap / max(1, len(query_terms))
+            if score > 0:
+                ranked.append(SearchResult(document.chunk_id, document.source, document.content, score))
+        ranked.sort(key=lambda item: item.score, reverse=True)
+        return ranked[:top_k]
+
+
+def tokenize_eval_text(text: str) -> list[str]:
+    lowered = text.lower()
+    ascii_terms = re.findall(r"[a-z0-9_./:-]+", lowered)
+    chinese_terms = re.findall(r"[\u4e00-\u9fff]{2,}", lowered)
+    return [*ascii_terms, *chinese_terms]
+
+
 def ndcg(
     items: list[dict],
 ) -> float:
@@ -570,4 +573,3 @@ if __name__ == "__main__":
     print("RAG evaluation completed.")
     for key in ["totalCases", "topK", "recallAtK", "precisionAtK", "mrr", "ndcgAtK", "hitRate", "averageFirstRelevantRank"]:
         print(f"{key}={report[key]}")
-

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     openai_embedding_model: str = "text-embedding-3-small"
-    database_url: str = "mysql+pymysql://evoalert:evoalert@127.0.0.1:3306/evoharness_alert?charset=utf8mb4"
+    database_url: str = "mysql+pymysql://evoalert:evoalert@127.0.0.1:13306/evoharness_alert?charset=utf8mb4"
     redis_url: str = "redis://127.0.0.1:6379/0"
     redis_memory_ttl_seconds: int = 86400
     redis_memory_max_messages: int = 40
@@ -34,10 +34,11 @@ class Settings(BaseSettings):
     chroma_snapshot_dir: str = "data/chroma-snapshots"
     chroma_snapshot_keep: int = 5
     embedding_timeout_seconds: float = 30.0
-    rag_eval_dataset: str = "app/rag_eval/evoharness-alert-rag-eval.json"
+    rag_eval_dataset: str = "app/rag_eval/alert_eval_cases_zh.json"
     rag_eval_output: str = "target/rag-eval-report.json"
     rag_eval_enabled: bool = False
     rag_eval_exit_after_run: bool = False
+    rag_eval_mock_knowledge: bool = False
     excel_path: str = "data/evoharness-alert-ledger.xlsx"
     alert_email_delivery_mode: str = "log"
     alert_email_rate_limit_per_minute: int = 30
