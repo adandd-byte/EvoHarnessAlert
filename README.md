@@ -614,9 +614,59 @@ Runbook / SOP：1,000 - 3,000 tokens
 
 ## 11. Agent 范式
 
-本项目采用事件驱动黑板式多 Agent 范式。它的核心是把复杂任务拆成多个角色，每个角色只处理自己擅长的部分，并把结构化结果写入共享黑板。
+### 11.1 总体范式
 
-为什么不是 ReAct 主导？ReAct 适合单 Agent 一边思考一边调用工具，比如“查一下日志，再想一下下一步”。但生产告警更需要多角色协作、并行证据补齐、权限隔离和审计。比如代码分析 Agent 不应该直接执行发布操作，通知 Agent 不应该修改代码，自动修复 Agent 必须经过人工审批。黑板式多 Agent 更容易做这些边界控制。
+本项目采用的是事件驱动黑板式多 Agent 范式。它不是 ReAct 循环，也不是把所有能力塞进一个单 Agent 大 Prompt，而是让多个角色在受控 Runtime 里围绕同一块黑板协作。
+
+Alert Client 对话入口由 Alert Agent Handler 统一承接。当前第一版代码里，这个职责主要落在 `app/services/alerting.py` 的 `AlertIngestService`；生产形态可以把它拆成更明确的 `AlertAgentHandler / AlertAgentHarness`。它负责输入脱敏、会话解析、调用 Agent Runtime、保存用户消息、生成告警报告、写入 Trace，并在 Client 回复之后触发工具计划。
+
+默认 Runtime 是 `event_driven_multi_agent`，配置位于 `app/core/config.py`，也会在 `/api/agent/status` 里暴露。当前默认预算是：最多 8 轮，每轮最多 4 个 claim，每个 Agent 最多 claim 3 次。预算存在的意义是防止 Agent 无限循环，也防止某个 Agent 反复认领任务挤占其他角色。
+
+```text
+Alert Client / Webhook / 群机器人
+-> Alert Agent Handler / Harness
+-> 输入脱敏、会话解析、权限边界
+-> Event Driven Multi Agent Runtime
+-> Blackboard 黑板协作
+-> AgentRunTrace 审计
+-> ToolJob 工具计划
+-> 前端或群机器人返回中文报告
+```
+
+### 11.2 多 Agent 分工
+
+CoordinatorAgent 创建 Root Task，并维护任务板、预算、安全门槛、冲突仲裁和最终采纳。它不负责亲自完成所有分析，而是把任务拆给更合适的 Agent。
+
+UnderstandingAgent 独立理解输入，发布 Intent Artifact。Intent 可以包含：是否是告警、告警类型、业务主题、服务名、接口名、是否需要上下文、是否像普通咨询或系统能力问答。
+
+SafetyAgent 独立做风险评估，必要时发布 Safety Override。它还会审查候选回复是否安全：是否泄露敏感信息，是否把推测说成事实，是否建议了未经审批的回滚、重启、扩缩容、部署等高风险动作。
+
+ContextAgent 在需要时准备 Memory、RAG 和 Skill。它会根据 intent/risk 决定是否加载历史、是否检索知识库、是否注入告警类型对应的 Skill Context。普通 Chat 不会强行进入 RAG，也不会生成告警报告。
+
+ResponseAgent 读取黑板上的意图、风险、上下文和安全约束，提出候选回复。最终回复必须经过 SafetyAgent 审查，并由 CoordinatorAgent 采纳。
+
+### 11.3 为什么不是 ReAct 主导
+
+ReAct 适合开放式工具使用：模型在 Thought、Action、Observation 中不断决定下一步。这个模式适合单 Agent 探索任务，比如“查一下日志，再想下一步”。但生产告警不能把关键决策完全交给模型自由发挥。
+
+告警场景里，有些动作必须被框架和后台策略控制：
+
+- 是否进入高优先级告警处理。
+- 是否生成 Incident。
+- 是否触发 P0/P1 通知。
+- 是否调用后台工具队列。
+- 是否建议自动修复、回滚、扩缩容或部署。
+- 是否把内部 risk、confidence、trace、后台标签暴露给客户端。
+
+EvoHarnessAlert 的做法是：模型只在受控任务中产出 artifact 或候选 prompt，Runtime 和后台策略负责安全门控、报告落库和工具执行。默认事件驱动 Runtime 中，所有输入都会经过独立风险评估，候选回复也要经过 SafetyAgent 审查。普通 Chat 不进入 RAG，不生成告警报告，也不触发后台工具队列。告警类请求才会进入 Incident、Trace、ToolJob 这些业务链路。
+
+### 11.4 和单 Agent 大 Prompt 的区别
+
+单 Agent 大 Prompt 的问题是职责混乱：同一个模型既要判断意图，又要查知识库，又要写回复，还要决定是否调用工具。prompt 会越来越长，安全边界也会越来越模糊。
+
+黑板式多 Agent 的优点是边界清楚：UnderstandingAgent 只负责理解，SafetyAgent 只负责风险和审查，ContextAgent 只负责上下文，ResponseAgent 只负责候选回复，CoordinatorAgent 只负责调度和采纳。每一步都能写入 Trace，后续复盘时可以看到 intent、risk、RAG、response、prompt 的完整过程。
+
+这也是本项目的核心取舍：不是把工具选择权完全交给大模型，而是让模型在受控任务里产出结构化结果，再由 Runtime、Harness 和 Tool Queue 接管安全、报告和工具执行。
 
 ## 12. RAG 知识库构建
 

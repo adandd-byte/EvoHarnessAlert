@@ -6,6 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     agent_framework: str = "event_driven_multi_agent"
+    agent_runtime_max_steps: int = 8
+    agent_runtime_max_claims_per_round: int = 4
+    agent_runtime_max_claims_per_agent: int = 3
     ai_provider: str = "mock"
     ai_temperature: float = 0.2
     ai_max_tokens: int = 512

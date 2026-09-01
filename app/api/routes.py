@@ -59,7 +59,13 @@ def agent_status(user: Annotated[UserAccount, Depends(current_user)]):
             {"name": "ResponseAgent", "status": "READY", "description": "生成摘要、影响判断和处置建议"},
         ],
         "skills": AlertSkillLibrary.status_items(),
-        "loop": {"type": "event-driven-multi-agent", "maxSteps": 8, "scheduler": "claim-based-actor-runtime"},
+        "loop": {
+            "type": "event-driven-multi-agent",
+            "maxSteps": settings.agent_runtime_max_steps,
+            "maxClaimsPerRound": settings.agent_runtime_max_claims_per_round,
+            "maxClaimsPerAgent": settings.agent_runtime_max_claims_per_agent,
+            "scheduler": "claim-based-actor-runtime",
+        },
     }
 
 
