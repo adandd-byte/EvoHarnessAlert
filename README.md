@@ -500,7 +500,9 @@ MySQL 和 Redis 都要用：MySQL 存事实、审计、事件、任务和报告�
 
 ## 10. Memory
 
-当前 MySQL 表包括：
+Memory 可以翻译成“记忆”或“上下文记忆”。在 EvoHarnessAlert 里，它不是用户画像，也不是风险标签仓库，而是为了让下一轮告警研判能复用最近上下文。
+
+当前 MySQL 表保存长期事实和审计：
 
 - AlertEvent：原始告警事实。
 - Incident：聚合后的故障事件。
@@ -510,7 +512,48 @@ MySQL 和 Redis 都要用：MySQL 存事实、审计、事件、任务和报告�
 - LedgerRecord：台账记录。
 - KnowledgeChunk：知识库切分结果。
 
-Redis 当前在配置层保留，生产扩展中用于保存短期上下文、热事件状态、Agent 私有记忆和流式对话状态。
+Redis 保存短期记忆，当前代码落在 `app/services/memory.py` 的 `RedisShortTermMemoryStore`。接口刻意保持很少：
+
+| 接口 | 中文含义 | 作用 |
+| --- | --- | --- |
+| `append` | 追加消息 | 用 `rpush` 把一条脱敏消息追加到 Redis list。 |
+| `load_recent` | 读取最近消息 | 从 Redis list 读取最近 N 条，默认 40 条。 |
+| `replace` | 整批替换 | 从 MySQL 历史消息恢复最近 40 条后，整批写回 Redis。 |
+| `messages_from_owner_roles` | 按角色读取 | 只取指定 owner/session 下某些 role 的消息，例如 user 和 assistant。 |
+
+每条 Redis 消息结构非常简单：
+
+```json
+{
+  "role": "user",
+  "content": "脱敏后的消息内容",
+  "createdAt": "2026-09-01T12:00:00"
+}
+```
+
+这里不保存额外画像，也不把诊断标签、风险等级、内部评分塞进短期记忆。短期记忆只保留对话或告警研判内容本身，而且内容会被脱敏。
+
+`append` 的写入流程是：
+
+```text
+输入 owner/session/role/content
+-> PrivacySanitizer 脱敏
+-> rpush 追加到 Redis list
+-> ltrim 裁剪到最近 40 条
+-> expire 设置 86400 秒过期
+```
+
+这样设计有两个好处：第一，短期记忆不会无限增长；第二，过期会话会自然释放 Redis 空间。默认长度来自 `REDIS_MEMORY_MAX_MESSAGES=40`，默认过期时间来自 `REDIS_MEMORY_TTL_SECONDS=86400`。
+
+`load_recent` 读取时还会再做一次脱敏。它会从 Redis 读取 JSON row，解析出 `role/content/createdAt`，然后再次通过 `PrivacySanitizer` 处理内容。即使 Redis 里意外混入了未脱敏内容，读取阶段也会做一道防护。
+
+`replace` 主要用于缓存回填：如果 Redis 没有某个 session 的短期记忆，但 MySQL 里有历史消息，系统可以从数据库取最近 40 条，转换成 AI message 后整批写回 Redis。下一轮请求就可以直接走 Redis，不必每次都查数据库。
+
+为什么 Redis 和 MySQL 要同时用？MySQL 是事实源，适合长期保存、审计、追责和后台查询；Redis 是热缓存，适合短期上下文、低延迟读取、TTL 自动释放和 SSE 流式会话状态。二者不是重复建设，而是一个负责“可信持久化”，一个负责“快速短记忆”。
+
+为什么 Agent 私有记忆要单独存在？因为不同 Agent 的中间思路不应该互相污染。LogQueryAgent 关心日志关键字和 traceId，CodeAnalysisAgent 关心代码路径和调用关系，SafetyAgent 关心敏感信息和高风险动作。如果全部混在一个上下文里，模型容易把未验证推测当事实，也会增加越权工具调用风险。
+
+为什么 List 要压缩？因为告警、日志、代码、指标、历史事件都可能很长，不控制长度就会让 Redis 和模型上下文一起膨胀。Redis list 只保留最近 40 条，模型输入再做二次筛选：保留服务名、时间窗口、traceId、异常指标、代码路径、Runbook 引用和日志证据，丢掉重复闲聊、过期状态和无证据推测。
 
 即使用 Kimi K2 或其他长上下文模型，也仍然需要上下文筛选。长上下文不是无限上下文，成本和延迟都要控制。一个可落地的 token 预算示例：
 
