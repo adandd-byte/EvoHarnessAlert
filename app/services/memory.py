@@ -12,6 +12,15 @@ from app.core.config import Settings, get_settings
 from app.services.privacy import PrivacySanitizer
 
 
+MEMORY_COMPACT_RECENT_MESSAGES = 8
+MEMORY_SUMMARY_MAX_CHARS = 500
+MEMORY_SUMMARY_USER_MESSAGES = 4
+MEMORY_SUMMARY_ASSISTANT_MESSAGES = 3
+MEMORY_SUMMARY_USER_CHARS = 80
+MEMORY_SUMMARY_ASSISTANT_CHARS = 70
+MEMORY_CURRENT_INPUT_CHARS = 80
+
+
 @dataclass(frozen=True)
 class ShortTermMessage:
     role: str
@@ -111,3 +120,76 @@ class RedisShortTermMemoryStore:
 
 def status() -> dict:
     return {"status": "READY", "domain": "alerting", "message": "Redis 短期记忆模块已就绪"}
+
+
+def compact_history_for_prompt(
+    messages: list[ShortTermMessage | dict[str, Any]],
+    current_input: str = "",
+    recent_limit: int = MEMORY_COMPACT_RECENT_MESSAGES,
+) -> list[dict[str, str]]:
+    sanitizer = PrivacySanitizer()
+    normalized = [_normalize_any_message(message, sanitizer) for message in messages]
+    if len(normalized) <= recent_limit:
+        return [message.model_dump() for message in normalized]
+
+    summary = summarize_history_for_memory(normalized, current_input)
+    system_message = ShortTermMessage(
+        role="system",
+        content=(
+            "历史摘要仅供 EvoHarnessAlert 内部上下文使用，不要向值班人员或客户展示；"
+            "不要据此输出后台标签、风险等级或未经验证的根因。"
+            f"\n{summary}"
+        ),
+        created_at=datetime.utcnow().isoformat(),
+    )
+    recent = normalized[-recent_limit:]
+    return [system_message.model_dump(), *[message.model_dump() for message in recent]]
+
+
+def summarize_history_for_memory(
+    messages: list[ShortTermMessage | dict[str, Any]],
+    current_input: str = "",
+) -> str:
+    sanitizer = PrivacySanitizer()
+    normalized = [_normalize_any_message(message, sanitizer) for message in messages]
+    user_messages = [
+        _clip(message.content, MEMORY_SUMMARY_USER_CHARS)
+        for message in normalized
+        if message.role == "user"
+    ][-MEMORY_SUMMARY_USER_MESSAGES:]
+    assistant_messages = [
+        _clip(message.content, MEMORY_SUMMARY_ASSISTANT_CHARS)
+        for message in normalized
+        if message.role == "assistant"
+    ][-MEMORY_SUMMARY_ASSISTANT_MESSAGES:]
+    parts = []
+    if user_messages:
+        parts.append("近期关注：" + "；".join(user_messages))
+    if assistant_messages:
+        parts.append("已给建议：" + "；".join(assistant_messages))
+    if current_input:
+        parts.append("本轮输入：" + _clip(sanitizer.sanitize(current_input), MEMORY_CURRENT_INPUT_CHARS))
+    if not parts:
+        parts.append("暂无可用历史摘要。")
+    return _clip("。".join(parts), MEMORY_SUMMARY_MAX_CHARS)
+
+
+def _normalize_any_message(message: ShortTermMessage | dict[str, Any], sanitizer: PrivacySanitizer) -> ShortTermMessage:
+    if isinstance(message, ShortTermMessage):
+        return ShortTermMessage(
+            role=message.role,
+            content=sanitizer.sanitize(message.content),
+            created_at=message.created_at,
+        )
+    return ShortTermMessage(
+        role=str(message.get("role") or "user"),
+        content=sanitizer.sanitize(str(message.get("content") or "")),
+        created_at=str(message.get("createdAt") or message.get("created_at") or datetime.utcnow().isoformat()),
+    )
+
+
+def _clip(value: str, limit: int) -> str:
+    value = " ".join((value or "").split())
+    if len(value) <= limit:
+        return value
+    return value[: max(0, limit - 1)] + "…"

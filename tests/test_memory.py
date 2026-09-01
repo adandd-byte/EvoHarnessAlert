@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.core.config import Settings
-from app.services.memory import RedisShortTermMemoryStore
+from app.services.memory import RedisShortTermMemoryStore, ShortTermMessage, compact_history_for_prompt, summarize_history_for_memory
 
 
 class FakeRedis:
@@ -77,3 +77,46 @@ def test_redis_short_term_memory_replace_and_filter_roles():
 
     messages = store.messages_from_owner_roles("team-a", "session-2", {"user", "assistant"})
     assert [message.role for message in messages] == ["user", "assistant"]
+
+
+def test_compact_history_keeps_short_history_as_sanitized_messages():
+    messages = [
+        {"role": "user", "content": "P1 告警 token=abc"},
+        {"role": "assistant", "content": "先查日志"},
+    ]
+
+    compacted = compact_history_for_prompt(messages)
+
+    assert len(compacted) == 2
+    assert compacted[0]["role"] == "user"
+    assert "abc" not in str(compacted)
+
+
+def test_compact_history_summarizes_long_history_and_keeps_recent_eight():
+    messages = [
+        ShortTermMessage(role="user" if index % 2 == 0 else "assistant", content=f"第{index}条消息，手机号 13812345678，关于 coupon-service 告警排查", created_at="2026-09-01T12:00:00")
+        for index in range(12)
+    ]
+
+    compacted = compact_history_for_prompt(messages, current_input="本轮是 EVENT 发布告警，不要被旧 PROBLEM 干扰")
+
+    assert len(compacted) == 9
+    assert compacted[0]["role"] == "system"
+    assert "内部上下文" in compacted[0]["content"]
+    assert "风险等级" in compacted[0]["content"]
+    assert "13812345678" not in str(compacted)
+    assert compacted[-1]["content"].startswith("第11条消息")
+
+
+def test_summarize_history_for_memory_is_deterministic_and_bounded():
+    messages = [
+        {"role": "user", "content": "用户持续补充 coupon-service 核销失败上下文 " * 20},
+        {"role": "assistant", "content": "建议查询日志、Trace、代码和大盘 " * 20},
+    ]
+
+    summary = summarize_history_for_memory(messages, current_input="当前输入包含 password=secret")
+
+    assert len(summary) <= 500
+    assert "secret" not in summary
+    assert "近期关注" in summary
+    assert "已给建议" in summary
