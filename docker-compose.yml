@@ -1,0 +1,54 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: evoharness_alert
+      MYSQL_USER: evoalert
+      MYSQL_PASSWORD: evoalert
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "13306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis-data:/data
+
+  app:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-evoharness-alert-qwen2.5-7b:latest}
+      DATABASE_URL: mysql+pymysql://evoalert:evoalert@mysql:3306/evoharness_alert?charset=utf8mb4
+      REDIS_URL: redis://redis:6379/0
+      KNOWLEDGE_VECTOR_ENABLED: ${KNOWLEDGE_VECTOR_ENABLED:-false}
+      CHROMA_COLLECTION_NAME: ${CHROMA_COLLECTION_NAME:-evoharness_alert_knowledge}
+      TOOL_QUEUE_ENABLED: ${TOOL_QUEUE_ENABLED:-true}
+      ALERT_EMAIL_DELIVERY_MODE: ${ALERT_EMAIL_DELIVERY_MODE:-log}
+      EXCEL_PATH: /app/data/evoharness-alert-ledger.xlsx
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  mysql-data:
+  redis-data:

@@ -1,0 +1,4040 @@
+{
+  "topK": 4,
+  "description": "EvoHarnessAlert 中文告警 RAG/路由评测集，覆盖 P0/P1/P2/P3 和 PROBLEM/BUSINESS/EVENT/HOST。",
+  "cases": [
+    {
+      "id": "alert-eval-001",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "title": "团购券核销核心链路不可用",
+      "query": "P0 PROBLEM 告警：团购券核销核心链路不可用。服务 coupon-service，接口 /coupon/verify，城市 北京，时间窗口 2026-09-01 10:00:00 到 10:05:00，traceId=trace-202609010000。5xx 错误率超过 60%，多个入口接口超时。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010000"
+      },
+      "annotations": {
+        "description": "5xx 错误率超过 60%，多个入口接口超时",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查日志",
+        "查 Trace 链路",
+        "看代码",
+        "查大盘",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-002",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "title": "团购套餐接口异常升高",
+      "query": "P1 PROBLEM 告警：团购套餐接口异常升高。服务 deal-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:01:00 到 10:06:00，traceId=trace-202609010001。5 分钟内失败率超过 20%，日志出现 NullPointerException。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010001"
+      },
+      "annotations": {
+        "description": "5 分钟内失败率超过 20%，日志出现 NullPointerException",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查日志",
+        "看代码",
+        "查大盘",
+        "检索知识库",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-003",
+      "severity": "P2",
+      "alertType": "PROBLEM",
+      "title": "支付依赖调用超时",
+      "query": "P2 PROBLEM 告警：支付依赖调用超时。服务 payment-service，接口 /pay/submit，城市 成都，时间窗口 2026-09-01 10:02:00 到 10:07:00，traceId=trace-202609010002。下游 RPC P99 延迟升高，少量请求失败。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010002"
+      },
+      "annotations": {
+        "description": "下游 RPC P99 延迟升高，少量请求失败",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查日志",
+        "查依赖大盘",
+        "检索 Runbook"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-004",
+      "severity": "P3",
+      "alertType": "PROBLEM",
+      "title": "订单慢查询增多",
+      "query": "P3 PROBLEM 告警：订单慢查询增多。服务 order-service，接口 /order/create，城市 深圳，时间窗口 2026-09-01 10:03:00 到 10:08:00，traceId=trace-202609010003。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010003"
+      },
+      "annotations": {
+        "description": "慢查询数量轻微升高，暂未影响核心指标",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "查日志",
+        "查数据库大盘",
+        "记录台账"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-005",
+      "severity": "P0",
+      "alertType": "BUSINESS",
+      "title": "餐饮预定支付成功率断崖",
+      "query": "P0 BUSINESS 告警：餐饮预定支付成功率断崖。服务 booking-service，接口 /booking/reserve，城市 杭州，时间窗口 2026-09-01 10:04:00 到 10:09:00，traceId=trace-202609010004。支付成功率 10 分钟内从 98% 降到 65%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010004"
+      },
+      "annotations": {
+        "description": "支付成功率 10 分钟内从 98% 降到 65%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据口径",
+        "查上下游漏斗",
+        "通知值班"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-006",
+      "severity": "P1",
+      "alertType": "BUSINESS",
+      "title": "团购支付核销成功率下降",
+      "query": "P1 BUSINESS 告警：团购支付核销成功率下降。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 北京，时间窗口 2026-09-01 10:05:00 到 10:10:00，traceId=trace-202609010005。团购券核销成功率下降 18%，影响多个城市。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010005"
+      },
+      "annotations": {
+        "description": "团购券核销成功率下降 18%，影响多个城市",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查业务大盘",
+        "查接口错误",
+        "检索业务 SOP"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-007",
+      "severity": "P2",
+      "alertType": "BUSINESS",
+      "title": "品牌会员卡订单量异常波动",
+      "query": "P2 BUSINESS 告警：品牌会员卡订单量异常波动。服务 member-card-service，接口 /coupon/verify，城市 上海，时间窗口 2026-09-01 10:06:00 到 10:11:00，traceId=trace-202609010006。订单量环比下降 25%，需确认活动和统计延迟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010006"
+      },
+      "annotations": {
+        "description": "订单量环比下降 25%，需确认活动和统计延迟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据延迟",
+        "联系业务 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-008",
+      "severity": "P3",
+      "alertType": "BUSINESS",
+      "title": "团购履约配送指标轻微抖动",
+      "query": "P3 BUSINESS 告警：团购履约配送指标轻微抖动。服务 groupbuy-delivery-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:07:00 到 10:12:00，traceId=trace-202609010007。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010007"
+      },
+      "annotations": {
+        "description": "转化率低于日常均值 5%，未触发资损",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录趋势",
+        "查历史波动",
+        "观察"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-009",
+      "severity": "P0",
+      "alertType": "EVENT",
+      "title": "到店自提发布后核心接口不可用",
+      "query": "P0 EVENT 告警：到店自提发布后核心接口不可用。服务 pickup-service，接口 /pay/submit，城市 深圳，时间窗口 2026-09-01 10:08:00 到 10:13:00，traceId=trace-202609010008。发布后 3 分钟核心接口错误率暴涨。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010008"
+      },
+      "annotations": {
+        "description": "发布后 3 分钟核心接口错误率暴涨",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "关联发布",
+        "查变更",
+        "建议回滚",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-010",
+      "severity": "P1",
+      "alertType": "EVENT",
+      "title": "门店配置变更影响业务",
+      "query": "P1 EVENT 告警：门店配置变更影响业务。服务 shop-service，接口 /order/create，城市 杭州，时间窗口 2026-09-01 10:09:00 到 10:14:00，traceId=trace-202609010009。限流配置变更后部分商家无法核销。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010009"
+      },
+      "annotations": {
+        "description": "限流配置变更后部分商家无法核销",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "关联配置",
+        "查影响范围",
+        "通知 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-011",
+      "severity": "P2",
+      "alertType": "EVENT",
+      "title": "自助点餐定时任务延迟",
+      "query": "P2 EVENT 告警：自助点餐定时任务延迟。服务 menu-service，接口 /booking/reserve，城市 北京，时间窗口 2026-09-01 10:10:00 到 10:15:00，traceId=trace-202609010010。优惠券同步任务延迟 30 分钟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010010"
+      },
+      "annotations": {
+        "description": "优惠券同步任务延迟 30 分钟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查任务状态",
+        "查依赖",
+        "记录事件"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-012",
+      "severity": "P3",
+      "alertType": "EVENT",
+      "title": "结算容量调整完成",
+      "query": "P3 EVENT 告警：结算容量调整完成。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 上海，时间窗口 2026-09-01 10:11:00 到 10:16:00，traceId=trace-202609010011。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010011"
+      },
+      "annotations": {
+        "description": "扩容事件完成，指标正常",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "观察指标"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-013",
+      "severity": "P0",
+      "alertType": "HOST",
+      "title": "团购券核销集群节点大面积不可用",
+      "query": "P0 HOST 告警：团购券核销集群节点大面积不可用。服务 coupon-service，接口 /coupon/verify，城市 成都，时间窗口 2026-09-01 10:12:00 到 10:17:00，traceId=trace-202609010012。多个节点 NotReady，核心服务副本不足。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010012"
+      },
+      "annotations": {
+        "description": "多个节点 NotReady，核心服务副本不足",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查主机",
+        "查容器",
+        "摘流",
+        "扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-014",
+      "severity": "P1",
+      "alertType": "HOST",
+      "title": "团购套餐磁盘水位过高",
+      "query": "P1 HOST 告警：团购套餐磁盘水位过高。服务 deal-service，接口 /deal/query，城市 深圳，时间窗口 2026-09-01 10:13:00 到 10:18:00，traceId=trace-202609010013。实例磁盘使用率 96%，日志写入失败风险。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010013"
+      },
+      "annotations": {
+        "description": "实例磁盘使用率 96%，日志写入失败风险",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查磁盘",
+        "清理日志",
+        "迁移实例"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-015",
+      "severity": "P2",
+      "alertType": "HOST",
+      "title": "支付CPU 饱和",
+      "query": "P2 HOST 告警：支付CPU 饱和。服务 payment-service，接口 /pay/submit，城市 杭州，时间窗口 2026-09-01 10:14:00 到 10:19:00，traceId=trace-202609010014。CPU 使用率连续 15 分钟超过 85%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010014"
+      },
+      "annotations": {
+        "description": "CPU 使用率连续 15 分钟超过 85%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查进程",
+        "查大盘",
+        "评估扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-016",
+      "severity": "P3",
+      "alertType": "HOST",
+      "title": "订单容器重启",
+      "query": "P3 HOST 告警：订单容器重启。服务 order-service，接口 /order/create，城市 北京，时间窗口 2026-09-01 10:15:00 到 10:20:00，traceId=trace-202609010015。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010015"
+      },
+      "annotations": {
+        "description": "单实例发生一次重启，已自动恢复",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "查重启原因"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-017",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "title": "餐饮预定核心链路不可用",
+      "query": "P0 PROBLEM 告警：餐饮预定核心链路不可用。服务 booking-service，接口 /booking/reserve，城市 上海，时间窗口 2026-09-01 10:16:00 到 10:21:00，traceId=trace-202609010016。5xx 错误率超过 60%，多个入口接口超时。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010016"
+      },
+      "annotations": {
+        "description": "5xx 错误率超过 60%，多个入口接口超时",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查日志",
+        "查 Trace 链路",
+        "看代码",
+        "查大盘",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-018",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "title": "团购支付接口异常升高",
+      "query": "P1 PROBLEM 告警：团购支付接口异常升高。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 成都，时间窗口 2026-09-01 10:17:00 到 10:22:00，traceId=trace-202609010017。5 分钟内失败率超过 20%，日志出现 NullPointerException。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010017"
+      },
+      "annotations": {
+        "description": "5 分钟内失败率超过 20%，日志出现 NullPointerException",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查日志",
+        "看代码",
+        "查大盘",
+        "检索知识库",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-019",
+      "severity": "P2",
+      "alertType": "PROBLEM",
+      "title": "品牌会员卡依赖调用超时",
+      "query": "P2 PROBLEM 告警：品牌会员卡依赖调用超时。服务 member-card-service，接口 /coupon/verify，城市 深圳，时间窗口 2026-09-01 10:18:00 到 10:23:00，traceId=trace-202609010018。下游 RPC P99 延迟升高，少量请求失败。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010018"
+      },
+      "annotations": {
+        "description": "下游 RPC P99 延迟升高，少量请求失败",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查日志",
+        "查依赖大盘",
+        "检索 Runbook"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-020",
+      "severity": "P3",
+      "alertType": "PROBLEM",
+      "title": "团购履约配送慢查询增多",
+      "query": "P3 PROBLEM 告警：团购履约配送慢查询增多。服务 groupbuy-delivery-service，接口 /deal/query，城市 杭州，时间窗口 2026-09-01 10:19:00 到 10:24:00，traceId=trace-202609010019。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010019"
+      },
+      "annotations": {
+        "description": "慢查询数量轻微升高，暂未影响核心指标",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "查日志",
+        "查数据库大盘",
+        "记录台账"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-021",
+      "severity": "P0",
+      "alertType": "BUSINESS",
+      "title": "到店自提支付成功率断崖",
+      "query": "P0 BUSINESS 告警：到店自提支付成功率断崖。服务 pickup-service，接口 /pay/submit，城市 北京，时间窗口 2026-09-01 10:20:00 到 10:25:00，traceId=trace-202609010020。支付成功率 10 分钟内从 98% 降到 65%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010020"
+      },
+      "annotations": {
+        "description": "支付成功率 10 分钟内从 98% 降到 65%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据口径",
+        "查上下游漏斗",
+        "通知值班"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-022",
+      "severity": "P1",
+      "alertType": "BUSINESS",
+      "title": "门店核销成功率下降",
+      "query": "P1 BUSINESS 告警：门店核销成功率下降。服务 shop-service，接口 /order/create，城市 上海，时间窗口 2026-09-01 10:21:00 到 10:26:00，traceId=trace-202609010021。团购券核销成功率下降 18%，影响多个城市。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010021"
+      },
+      "annotations": {
+        "description": "团购券核销成功率下降 18%，影响多个城市",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查业务大盘",
+        "查接口错误",
+        "检索业务 SOP"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-023",
+      "severity": "P2",
+      "alertType": "BUSINESS",
+      "title": "自助点餐订单量异常波动",
+      "query": "P2 BUSINESS 告警：自助点餐订单量异常波动。服务 menu-service，接口 /booking/reserve，城市 成都，时间窗口 2026-09-01 10:22:00 到 10:27:00，traceId=trace-202609010022。订单量环比下降 25%，需确认活动和统计延迟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010022"
+      },
+      "annotations": {
+        "description": "订单量环比下降 25%，需确认活动和统计延迟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据延迟",
+        "联系业务 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-024",
+      "severity": "P3",
+      "alertType": "BUSINESS",
+      "title": "结算指标轻微抖动",
+      "query": "P3 BUSINESS 告警：结算指标轻微抖动。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 深圳，时间窗口 2026-09-01 10:23:00 到 10:28:00，traceId=trace-202609010023。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010023"
+      },
+      "annotations": {
+        "description": "转化率低于日常均值 5%，未触发资损",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录趋势",
+        "查历史波动",
+        "观察"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-025",
+      "severity": "P0",
+      "alertType": "EVENT",
+      "title": "团购券核销发布后核心接口不可用",
+      "query": "P0 EVENT 告警：团购券核销发布后核心接口不可用。服务 coupon-service，接口 /coupon/verify，城市 杭州，时间窗口 2026-09-01 10:24:00 到 10:29:00，traceId=trace-202609010024。发布后 3 分钟核心接口错误率暴涨。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010024"
+      },
+      "annotations": {
+        "description": "发布后 3 分钟核心接口错误率暴涨",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "关联发布",
+        "查变更",
+        "建议回滚",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-026",
+      "severity": "P1",
+      "alertType": "EVENT",
+      "title": "团购套餐配置变更影响业务",
+      "query": "P1 EVENT 告警：团购套餐配置变更影响业务。服务 deal-service，接口 /deal/query，城市 北京，时间窗口 2026-09-01 10:25:00 到 10:30:00，traceId=trace-202609010025。限流配置变更后部分商家无法核销。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010025"
+      },
+      "annotations": {
+        "description": "限流配置变更后部分商家无法核销",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "关联配置",
+        "查影响范围",
+        "通知 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-027",
+      "severity": "P2",
+      "alertType": "EVENT",
+      "title": "支付定时任务延迟",
+      "query": "P2 EVENT 告警：支付定时任务延迟。服务 payment-service，接口 /pay/submit，城市 上海，时间窗口 2026-09-01 10:26:00 到 10:31:00，traceId=trace-202609010026。优惠券同步任务延迟 30 分钟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010026"
+      },
+      "annotations": {
+        "description": "优惠券同步任务延迟 30 分钟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查任务状态",
+        "查依赖",
+        "记录事件"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-028",
+      "severity": "P3",
+      "alertType": "EVENT",
+      "title": "订单容量调整完成",
+      "query": "P3 EVENT 告警：订单容量调整完成。服务 order-service，接口 /order/create，城市 成都，时间窗口 2026-09-01 10:27:00 到 10:32:00，traceId=trace-202609010027。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010027"
+      },
+      "annotations": {
+        "description": "扩容事件完成，指标正常",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "观察指标"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-029",
+      "severity": "P0",
+      "alertType": "HOST",
+      "title": "餐饮预定集群节点大面积不可用",
+      "query": "P0 HOST 告警：餐饮预定集群节点大面积不可用。服务 booking-service，接口 /booking/reserve，城市 深圳，时间窗口 2026-09-01 10:28:00 到 10:33:00，traceId=trace-202609010028。多个节点 NotReady，核心服务副本不足。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010028"
+      },
+      "annotations": {
+        "description": "多个节点 NotReady，核心服务副本不足",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查主机",
+        "查容器",
+        "摘流",
+        "扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-030",
+      "severity": "P1",
+      "alertType": "HOST",
+      "title": "团购支付磁盘水位过高",
+      "query": "P1 HOST 告警：团购支付磁盘水位过高。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 杭州，时间窗口 2026-09-01 10:29:00 到 10:34:00，traceId=trace-202609010029。实例磁盘使用率 96%，日志写入失败风险。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010029"
+      },
+      "annotations": {
+        "description": "实例磁盘使用率 96%，日志写入失败风险",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查磁盘",
+        "清理日志",
+        "迁移实例"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-031",
+      "severity": "P2",
+      "alertType": "HOST",
+      "title": "品牌会员卡CPU 饱和",
+      "query": "P2 HOST 告警：品牌会员卡CPU 饱和。服务 member-card-service，接口 /coupon/verify，城市 北京，时间窗口 2026-09-01 10:30:00 到 10:35:00，traceId=trace-202609010030。CPU 使用率连续 15 分钟超过 85%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010030"
+      },
+      "annotations": {
+        "description": "CPU 使用率连续 15 分钟超过 85%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查进程",
+        "查大盘",
+        "评估扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-032",
+      "severity": "P3",
+      "alertType": "HOST",
+      "title": "团购履约配送容器重启",
+      "query": "P3 HOST 告警：团购履约配送容器重启。服务 groupbuy-delivery-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:31:00 到 10:36:00，traceId=trace-202609010031。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010031"
+      },
+      "annotations": {
+        "description": "单实例发生一次重启，已自动恢复",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "查重启原因"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-033",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "title": "到店自提核心链路不可用",
+      "query": "P0 PROBLEM 告警：到店自提核心链路不可用。服务 pickup-service，接口 /pay/submit，城市 成都，时间窗口 2026-09-01 10:32:00 到 10:37:00，traceId=trace-202609010032。5xx 错误率超过 60%，多个入口接口超时。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010032"
+      },
+      "annotations": {
+        "description": "5xx 错误率超过 60%，多个入口接口超时",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查日志",
+        "查 Trace 链路",
+        "看代码",
+        "查大盘",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-034",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "title": "门店接口异常升高",
+      "query": "P1 PROBLEM 告警：门店接口异常升高。服务 shop-service，接口 /order/create，城市 深圳，时间窗口 2026-09-01 10:33:00 到 10:38:00，traceId=trace-202609010033。5 分钟内失败率超过 20%，日志出现 NullPointerException。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010033"
+      },
+      "annotations": {
+        "description": "5 分钟内失败率超过 20%，日志出现 NullPointerException",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查日志",
+        "看代码",
+        "查大盘",
+        "检索知识库",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-035",
+      "severity": "P2",
+      "alertType": "PROBLEM",
+      "title": "自助点餐依赖调用超时",
+      "query": "P2 PROBLEM 告警：自助点餐依赖调用超时。服务 menu-service，接口 /booking/reserve，城市 杭州，时间窗口 2026-09-01 10:34:00 到 10:39:00，traceId=trace-202609010034。下游 RPC P99 延迟升高，少量请求失败。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010034"
+      },
+      "annotations": {
+        "description": "下游 RPC P99 延迟升高，少量请求失败",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查日志",
+        "查依赖大盘",
+        "检索 Runbook"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-036",
+      "severity": "P3",
+      "alertType": "PROBLEM",
+      "title": "结算慢查询增多",
+      "query": "P3 PROBLEM 告警：结算慢查询增多。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 北京，时间窗口 2026-09-01 10:35:00 到 10:40:00，traceId=trace-202609010035。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010035"
+      },
+      "annotations": {
+        "description": "慢查询数量轻微升高，暂未影响核心指标",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "查日志",
+        "查数据库大盘",
+        "记录台账"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-037",
+      "severity": "P0",
+      "alertType": "BUSINESS",
+      "title": "团购券核销支付成功率断崖",
+      "query": "P0 BUSINESS 告警：团购券核销支付成功率断崖。服务 coupon-service，接口 /coupon/verify，城市 上海，时间窗口 2026-09-01 10:36:00 到 10:41:00，traceId=trace-202609010036。支付成功率 10 分钟内从 98% 降到 65%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010036"
+      },
+      "annotations": {
+        "description": "支付成功率 10 分钟内从 98% 降到 65%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据口径",
+        "查上下游漏斗",
+        "通知值班"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-038",
+      "severity": "P1",
+      "alertType": "BUSINESS",
+      "title": "团购套餐核销成功率下降",
+      "query": "P1 BUSINESS 告警：团购套餐核销成功率下降。服务 deal-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:37:00 到 10:42:00，traceId=trace-202609010037。团购券核销成功率下降 18%，影响多个城市。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010037"
+      },
+      "annotations": {
+        "description": "团购券核销成功率下降 18%，影响多个城市",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查业务大盘",
+        "查接口错误",
+        "检索业务 SOP"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-039",
+      "severity": "P2",
+      "alertType": "BUSINESS",
+      "title": "支付订单量异常波动",
+      "query": "P2 BUSINESS 告警：支付订单量异常波动。服务 payment-service，接口 /pay/submit，城市 深圳，时间窗口 2026-09-01 10:38:00 到 10:43:00，traceId=trace-202609010038。订单量环比下降 25%，需确认活动和统计延迟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010038"
+      },
+      "annotations": {
+        "description": "订单量环比下降 25%，需确认活动和统计延迟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据延迟",
+        "联系业务 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-040",
+      "severity": "P3",
+      "alertType": "BUSINESS",
+      "title": "订单指标轻微抖动",
+      "query": "P3 BUSINESS 告警：订单指标轻微抖动。服务 order-service，接口 /order/create，城市 杭州，时间窗口 2026-09-01 10:39:00 到 10:44:00，traceId=trace-202609010039。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010039"
+      },
+      "annotations": {
+        "description": "转化率低于日常均值 5%，未触发资损",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录趋势",
+        "查历史波动",
+        "观察"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-041",
+      "severity": "P0",
+      "alertType": "EVENT",
+      "title": "餐饮预定发布后核心接口不可用",
+      "query": "P0 EVENT 告警：餐饮预定发布后核心接口不可用。服务 booking-service，接口 /booking/reserve，城市 北京，时间窗口 2026-09-01 10:40:00 到 10:45:00，traceId=trace-202609010040。发布后 3 分钟核心接口错误率暴涨。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010040"
+      },
+      "annotations": {
+        "description": "发布后 3 分钟核心接口错误率暴涨",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "关联发布",
+        "查变更",
+        "建议回滚",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-042",
+      "severity": "P1",
+      "alertType": "EVENT",
+      "title": "团购支付配置变更影响业务",
+      "query": "P1 EVENT 告警：团购支付配置变更影响业务。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 上海，时间窗口 2026-09-01 10:41:00 到 10:46:00，traceId=trace-202609010041。限流配置变更后部分商家无法核销。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010041"
+      },
+      "annotations": {
+        "description": "限流配置变更后部分商家无法核销",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "关联配置",
+        "查影响范围",
+        "通知 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-043",
+      "severity": "P2",
+      "alertType": "EVENT",
+      "title": "品牌会员卡定时任务延迟",
+      "query": "P2 EVENT 告警：品牌会员卡定时任务延迟。服务 member-card-service，接口 /coupon/verify，城市 成都，时间窗口 2026-09-01 10:42:00 到 10:47:00，traceId=trace-202609010042。优惠券同步任务延迟 30 分钟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010042"
+      },
+      "annotations": {
+        "description": "优惠券同步任务延迟 30 分钟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查任务状态",
+        "查依赖",
+        "记录事件"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-044",
+      "severity": "P3",
+      "alertType": "EVENT",
+      "title": "团购履约配送容量调整完成",
+      "query": "P3 EVENT 告警：团购履约配送容量调整完成。服务 groupbuy-delivery-service，接口 /deal/query，城市 深圳，时间窗口 2026-09-01 10:43:00 到 10:48:00，traceId=trace-202609010043。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010043"
+      },
+      "annotations": {
+        "description": "扩容事件完成，指标正常",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "观察指标"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-045",
+      "severity": "P0",
+      "alertType": "HOST",
+      "title": "到店自提集群节点大面积不可用",
+      "query": "P0 HOST 告警：到店自提集群节点大面积不可用。服务 pickup-service，接口 /pay/submit，城市 杭州，时间窗口 2026-09-01 10:44:00 到 10:49:00，traceId=trace-202609010044。多个节点 NotReady，核心服务副本不足。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010044"
+      },
+      "annotations": {
+        "description": "多个节点 NotReady，核心服务副本不足",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查主机",
+        "查容器",
+        "摘流",
+        "扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-046",
+      "severity": "P1",
+      "alertType": "HOST",
+      "title": "门店磁盘水位过高",
+      "query": "P1 HOST 告警：门店磁盘水位过高。服务 shop-service，接口 /order/create，城市 北京，时间窗口 2026-09-01 10:45:00 到 10:50:00，traceId=trace-202609010045。实例磁盘使用率 96%，日志写入失败风险。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010045"
+      },
+      "annotations": {
+        "description": "实例磁盘使用率 96%，日志写入失败风险",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查磁盘",
+        "清理日志",
+        "迁移实例"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-047",
+      "severity": "P2",
+      "alertType": "HOST",
+      "title": "自助点餐CPU 饱和",
+      "query": "P2 HOST 告警：自助点餐CPU 饱和。服务 menu-service，接口 /booking/reserve，城市 上海，时间窗口 2026-09-01 10:46:00 到 10:51:00，traceId=trace-202609010046。CPU 使用率连续 15 分钟超过 85%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010046"
+      },
+      "annotations": {
+        "description": "CPU 使用率连续 15 分钟超过 85%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查进程",
+        "查大盘",
+        "评估扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-048",
+      "severity": "P3",
+      "alertType": "HOST",
+      "title": "结算容器重启",
+      "query": "P3 HOST 告警：结算容器重启。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 成都，时间窗口 2026-09-01 10:47:00 到 10:52:00，traceId=trace-202609010047。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010047"
+      },
+      "annotations": {
+        "description": "单实例发生一次重启，已自动恢复",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "查重启原因"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-049",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "title": "团购券核销核心链路不可用",
+      "query": "P0 PROBLEM 告警：团购券核销核心链路不可用。服务 coupon-service，接口 /coupon/verify，城市 深圳，时间窗口 2026-09-01 10:48:00 到 10:53:00，traceId=trace-202609010048。5xx 错误率超过 60%，多个入口接口超时。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010048"
+      },
+      "annotations": {
+        "description": "5xx 错误率超过 60%，多个入口接口超时",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查日志",
+        "查 Trace 链路",
+        "看代码",
+        "查大盘",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-050",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "title": "团购套餐接口异常升高",
+      "query": "P1 PROBLEM 告警：团购套餐接口异常升高。服务 deal-service，接口 /deal/query，城市 杭州，时间窗口 2026-09-01 10:49:00 到 10:54:00，traceId=trace-202609010049。5 分钟内失败率超过 20%，日志出现 NullPointerException。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010049"
+      },
+      "annotations": {
+        "description": "5 分钟内失败率超过 20%，日志出现 NullPointerException",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查日志",
+        "看代码",
+        "查大盘",
+        "检索知识库",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-051",
+      "severity": "P2",
+      "alertType": "PROBLEM",
+      "title": "支付依赖调用超时",
+      "query": "P2 PROBLEM 告警：支付依赖调用超时。服务 payment-service，接口 /pay/submit，城市 北京，时间窗口 2026-09-01 10:50:00 到 10:55:00，traceId=trace-202609010050。下游 RPC P99 延迟升高，少量请求失败。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010050"
+      },
+      "annotations": {
+        "description": "下游 RPC P99 延迟升高，少量请求失败",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查日志",
+        "查依赖大盘",
+        "检索 Runbook"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-052",
+      "severity": "P3",
+      "alertType": "PROBLEM",
+      "title": "订单慢查询增多",
+      "query": "P3 PROBLEM 告警：订单慢查询增多。服务 order-service，接口 /order/create，城市 上海，时间窗口 2026-09-01 10:51:00 到 10:56:00，traceId=trace-202609010051。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010051"
+      },
+      "annotations": {
+        "description": "慢查询数量轻微升高，暂未影响核心指标",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "查日志",
+        "查数据库大盘",
+        "记录台账"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-053",
+      "severity": "P0",
+      "alertType": "BUSINESS",
+      "title": "餐饮预定支付成功率断崖",
+      "query": "P0 BUSINESS 告警：餐饮预定支付成功率断崖。服务 booking-service，接口 /booking/reserve，城市 成都，时间窗口 2026-09-01 10:52:00 到 10:57:00，traceId=trace-202609010052。支付成功率 10 分钟内从 98% 降到 65%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010052"
+      },
+      "annotations": {
+        "description": "支付成功率 10 分钟内从 98% 降到 65%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据口径",
+        "查上下游漏斗",
+        "通知值班"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-054",
+      "severity": "P1",
+      "alertType": "BUSINESS",
+      "title": "团购支付核销成功率下降",
+      "query": "P1 BUSINESS 告警：团购支付核销成功率下降。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 深圳，时间窗口 2026-09-01 10:53:00 到 10:58:00，traceId=trace-202609010053。团购券核销成功率下降 18%，影响多个城市。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010053"
+      },
+      "annotations": {
+        "description": "团购券核销成功率下降 18%，影响多个城市",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查业务大盘",
+        "查接口错误",
+        "检索业务 SOP"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-055",
+      "severity": "P2",
+      "alertType": "BUSINESS",
+      "title": "品牌会员卡订单量异常波动",
+      "query": "P2 BUSINESS 告警：品牌会员卡订单量异常波动。服务 member-card-service，接口 /coupon/verify，城市 杭州，时间窗口 2026-09-01 10:54:00 到 10:59:00，traceId=trace-202609010054。订单量环比下降 25%，需确认活动和统计延迟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010054"
+      },
+      "annotations": {
+        "description": "订单量环比下降 25%，需确认活动和统计延迟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据延迟",
+        "联系业务 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-056",
+      "severity": "P3",
+      "alertType": "BUSINESS",
+      "title": "团购履约配送指标轻微抖动",
+      "query": "P3 BUSINESS 告警：团购履约配送指标轻微抖动。服务 groupbuy-delivery-service，接口 /deal/query，城市 北京，时间窗口 2026-09-01 10:55:00 到 10:00:00，traceId=trace-202609010055。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010055"
+      },
+      "annotations": {
+        "description": "转化率低于日常均值 5%，未触发资损",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录趋势",
+        "查历史波动",
+        "观察"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-057",
+      "severity": "P0",
+      "alertType": "EVENT",
+      "title": "到店自提发布后核心接口不可用",
+      "query": "P0 EVENT 告警：到店自提发布后核心接口不可用。服务 pickup-service，接口 /pay/submit，城市 上海，时间窗口 2026-09-01 10:56:00 到 10:01:00，traceId=trace-202609010056。发布后 3 分钟核心接口错误率暴涨。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010056"
+      },
+      "annotations": {
+        "description": "发布后 3 分钟核心接口错误率暴涨",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "关联发布",
+        "查变更",
+        "建议回滚",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-058",
+      "severity": "P1",
+      "alertType": "EVENT",
+      "title": "门店配置变更影响业务",
+      "query": "P1 EVENT 告警：门店配置变更影响业务。服务 shop-service，接口 /order/create，城市 成都，时间窗口 2026-09-01 10:57:00 到 10:02:00，traceId=trace-202609010057。限流配置变更后部分商家无法核销。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010057"
+      },
+      "annotations": {
+        "description": "限流配置变更后部分商家无法核销",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "关联配置",
+        "查影响范围",
+        "通知 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-059",
+      "severity": "P2",
+      "alertType": "EVENT",
+      "title": "自助点餐定时任务延迟",
+      "query": "P2 EVENT 告警：自助点餐定时任务延迟。服务 menu-service，接口 /booking/reserve，城市 深圳，时间窗口 2026-09-01 10:58:00 到 10:03:00，traceId=trace-202609010058。优惠券同步任务延迟 30 分钟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010058"
+      },
+      "annotations": {
+        "description": "优惠券同步任务延迟 30 分钟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查任务状态",
+        "查依赖",
+        "记录事件"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-060",
+      "severity": "P3",
+      "alertType": "EVENT",
+      "title": "结算容量调整完成",
+      "query": "P3 EVENT 告警：结算容量调整完成。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 杭州，时间窗口 2026-09-01 10:59:00 到 10:04:00，traceId=trace-202609010059。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010059"
+      },
+      "annotations": {
+        "description": "扩容事件完成，指标正常",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "观察指标"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-061",
+      "severity": "P0",
+      "alertType": "HOST",
+      "title": "团购券核销集群节点大面积不可用",
+      "query": "P0 HOST 告警：团购券核销集群节点大面积不可用。服务 coupon-service，接口 /coupon/verify，城市 北京，时间窗口 2026-09-01 10:00:00 到 10:05:00，traceId=trace-202609010060。多个节点 NotReady，核心服务副本不足。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010060"
+      },
+      "annotations": {
+        "description": "多个节点 NotReady，核心服务副本不足",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查主机",
+        "查容器",
+        "摘流",
+        "扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-062",
+      "severity": "P1",
+      "alertType": "HOST",
+      "title": "团购套餐磁盘水位过高",
+      "query": "P1 HOST 告警：团购套餐磁盘水位过高。服务 deal-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:01:00 到 10:06:00，traceId=trace-202609010061。实例磁盘使用率 96%，日志写入失败风险。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010061"
+      },
+      "annotations": {
+        "description": "实例磁盘使用率 96%，日志写入失败风险",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查磁盘",
+        "清理日志",
+        "迁移实例"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-063",
+      "severity": "P2",
+      "alertType": "HOST",
+      "title": "支付CPU 饱和",
+      "query": "P2 HOST 告警：支付CPU 饱和。服务 payment-service，接口 /pay/submit，城市 成都，时间窗口 2026-09-01 10:02:00 到 10:07:00，traceId=trace-202609010062。CPU 使用率连续 15 分钟超过 85%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010062"
+      },
+      "annotations": {
+        "description": "CPU 使用率连续 15 分钟超过 85%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查进程",
+        "查大盘",
+        "评估扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-064",
+      "severity": "P3",
+      "alertType": "HOST",
+      "title": "订单容器重启",
+      "query": "P3 HOST 告警：订单容器重启。服务 order-service，接口 /order/create，城市 深圳，时间窗口 2026-09-01 10:03:00 到 10:08:00，traceId=trace-202609010063。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010063"
+      },
+      "annotations": {
+        "description": "单实例发生一次重启，已自动恢复",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "查重启原因"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-065",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "title": "餐饮预定核心链路不可用",
+      "query": "P0 PROBLEM 告警：餐饮预定核心链路不可用。服务 booking-service，接口 /booking/reserve，城市 杭州，时间窗口 2026-09-01 10:04:00 到 10:09:00，traceId=trace-202609010064。5xx 错误率超过 60%，多个入口接口超时。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010064"
+      },
+      "annotations": {
+        "description": "5xx 错误率超过 60%，多个入口接口超时",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查日志",
+        "查 Trace 链路",
+        "看代码",
+        "查大盘",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-066",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "title": "团购支付接口异常升高",
+      "query": "P1 PROBLEM 告警：团购支付接口异常升高。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 北京，时间窗口 2026-09-01 10:05:00 到 10:10:00，traceId=trace-202609010065。5 分钟内失败率超过 20%，日志出现 NullPointerException。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010065"
+      },
+      "annotations": {
+        "description": "5 分钟内失败率超过 20%，日志出现 NullPointerException",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查日志",
+        "看代码",
+        "查大盘",
+        "检索知识库",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-067",
+      "severity": "P2",
+      "alertType": "PROBLEM",
+      "title": "品牌会员卡依赖调用超时",
+      "query": "P2 PROBLEM 告警：品牌会员卡依赖调用超时。服务 member-card-service，接口 /coupon/verify，城市 上海，时间窗口 2026-09-01 10:06:00 到 10:11:00，traceId=trace-202609010066。下游 RPC P99 延迟升高，少量请求失败。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010066"
+      },
+      "annotations": {
+        "description": "下游 RPC P99 延迟升高，少量请求失败",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查日志",
+        "查依赖大盘",
+        "检索 Runbook"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-068",
+      "severity": "P3",
+      "alertType": "PROBLEM",
+      "title": "团购履约配送慢查询增多",
+      "query": "P3 PROBLEM 告警：团购履约配送慢查询增多。服务 groupbuy-delivery-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:07:00 到 10:12:00，traceId=trace-202609010067。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010067"
+      },
+      "annotations": {
+        "description": "慢查询数量轻微升高，暂未影响核心指标",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "查日志",
+        "查数据库大盘",
+        "记录台账"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-069",
+      "severity": "P0",
+      "alertType": "BUSINESS",
+      "title": "到店自提支付成功率断崖",
+      "query": "P0 BUSINESS 告警：到店自提支付成功率断崖。服务 pickup-service，接口 /pay/submit，城市 深圳，时间窗口 2026-09-01 10:08:00 到 10:13:00，traceId=trace-202609010068。支付成功率 10 分钟内从 98% 降到 65%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010068"
+      },
+      "annotations": {
+        "description": "支付成功率 10 分钟内从 98% 降到 65%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据口径",
+        "查上下游漏斗",
+        "通知值班"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-070",
+      "severity": "P1",
+      "alertType": "BUSINESS",
+      "title": "门店核销成功率下降",
+      "query": "P1 BUSINESS 告警：门店核销成功率下降。服务 shop-service，接口 /order/create，城市 杭州，时间窗口 2026-09-01 10:09:00 到 10:14:00，traceId=trace-202609010069。团购券核销成功率下降 18%，影响多个城市。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010069"
+      },
+      "annotations": {
+        "description": "团购券核销成功率下降 18%，影响多个城市",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查业务大盘",
+        "查接口错误",
+        "检索业务 SOP"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-071",
+      "severity": "P2",
+      "alertType": "BUSINESS",
+      "title": "自助点餐订单量异常波动",
+      "query": "P2 BUSINESS 告警：自助点餐订单量异常波动。服务 menu-service，接口 /booking/reserve，城市 北京，时间窗口 2026-09-01 10:10:00 到 10:15:00，traceId=trace-202609010070。订单量环比下降 25%，需确认活动和统计延迟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010070"
+      },
+      "annotations": {
+        "description": "订单量环比下降 25%，需确认活动和统计延迟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据延迟",
+        "联系业务 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-072",
+      "severity": "P3",
+      "alertType": "BUSINESS",
+      "title": "结算指标轻微抖动",
+      "query": "P3 BUSINESS 告警：结算指标轻微抖动。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 上海，时间窗口 2026-09-01 10:11:00 到 10:16:00，traceId=trace-202609010071。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010071"
+      },
+      "annotations": {
+        "description": "转化率低于日常均值 5%，未触发资损",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录趋势",
+        "查历史波动",
+        "观察"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-073",
+      "severity": "P0",
+      "alertType": "EVENT",
+      "title": "团购券核销发布后核心接口不可用",
+      "query": "P0 EVENT 告警：团购券核销发布后核心接口不可用。服务 coupon-service，接口 /coupon/verify，城市 成都，时间窗口 2026-09-01 10:12:00 到 10:17:00，traceId=trace-202609010072。发布后 3 分钟核心接口错误率暴涨。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010072"
+      },
+      "annotations": {
+        "description": "发布后 3 分钟核心接口错误率暴涨",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "关联发布",
+        "查变更",
+        "建议回滚",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-074",
+      "severity": "P1",
+      "alertType": "EVENT",
+      "title": "团购套餐配置变更影响业务",
+      "query": "P1 EVENT 告警：团购套餐配置变更影响业务。服务 deal-service，接口 /deal/query，城市 深圳，时间窗口 2026-09-01 10:13:00 到 10:18:00，traceId=trace-202609010073。限流配置变更后部分商家无法核销。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010073"
+      },
+      "annotations": {
+        "description": "限流配置变更后部分商家无法核销",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "关联配置",
+        "查影响范围",
+        "通知 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-075",
+      "severity": "P2",
+      "alertType": "EVENT",
+      "title": "支付定时任务延迟",
+      "query": "P2 EVENT 告警：支付定时任务延迟。服务 payment-service，接口 /pay/submit，城市 杭州，时间窗口 2026-09-01 10:14:00 到 10:19:00，traceId=trace-202609010074。优惠券同步任务延迟 30 分钟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010074"
+      },
+      "annotations": {
+        "description": "优惠券同步任务延迟 30 分钟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查任务状态",
+        "查依赖",
+        "记录事件"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-076",
+      "severity": "P3",
+      "alertType": "EVENT",
+      "title": "订单容量调整完成",
+      "query": "P3 EVENT 告警：订单容量调整完成。服务 order-service，接口 /order/create，城市 北京，时间窗口 2026-09-01 10:15:00 到 10:20:00，traceId=trace-202609010075。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010075"
+      },
+      "annotations": {
+        "description": "扩容事件完成，指标正常",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "观察指标"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-077",
+      "severity": "P0",
+      "alertType": "HOST",
+      "title": "餐饮预定集群节点大面积不可用",
+      "query": "P0 HOST 告警：餐饮预定集群节点大面积不可用。服务 booking-service，接口 /booking/reserve，城市 上海，时间窗口 2026-09-01 10:16:00 到 10:21:00，traceId=trace-202609010076。多个节点 NotReady，核心服务副本不足。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010076"
+      },
+      "annotations": {
+        "description": "多个节点 NotReady，核心服务副本不足",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查主机",
+        "查容器",
+        "摘流",
+        "扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-078",
+      "severity": "P1",
+      "alertType": "HOST",
+      "title": "团购支付磁盘水位过高",
+      "query": "P1 HOST 告警：团购支付磁盘水位过高。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 成都，时间窗口 2026-09-01 10:17:00 到 10:22:00，traceId=trace-202609010077。实例磁盘使用率 96%，日志写入失败风险。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010077"
+      },
+      "annotations": {
+        "description": "实例磁盘使用率 96%，日志写入失败风险",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查磁盘",
+        "清理日志",
+        "迁移实例"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-079",
+      "severity": "P2",
+      "alertType": "HOST",
+      "title": "品牌会员卡CPU 饱和",
+      "query": "P2 HOST 告警：品牌会员卡CPU 饱和。服务 member-card-service，接口 /coupon/verify，城市 深圳，时间窗口 2026-09-01 10:18:00 到 10:23:00，traceId=trace-202609010078。CPU 使用率连续 15 分钟超过 85%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010078"
+      },
+      "annotations": {
+        "description": "CPU 使用率连续 15 分钟超过 85%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查进程",
+        "查大盘",
+        "评估扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-080",
+      "severity": "P3",
+      "alertType": "HOST",
+      "title": "团购履约配送容器重启",
+      "query": "P3 HOST 告警：团购履约配送容器重启。服务 groupbuy-delivery-service，接口 /deal/query，城市 杭州，时间窗口 2026-09-01 10:19:00 到 10:24:00，traceId=trace-202609010079。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010079"
+      },
+      "annotations": {
+        "description": "单实例发生一次重启，已自动恢复",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "查重启原因"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-081",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "title": "到店自提核心链路不可用",
+      "query": "P0 PROBLEM 告警：到店自提核心链路不可用。服务 pickup-service，接口 /pay/submit，城市 北京，时间窗口 2026-09-01 10:20:00 到 10:25:00，traceId=trace-202609010080。5xx 错误率超过 60%，多个入口接口超时。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010080"
+      },
+      "annotations": {
+        "description": "5xx 错误率超过 60%，多个入口接口超时",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查日志",
+        "查 Trace 链路",
+        "看代码",
+        "查大盘",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-082",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "title": "门店接口异常升高",
+      "query": "P1 PROBLEM 告警：门店接口异常升高。服务 shop-service，接口 /order/create，城市 上海，时间窗口 2026-09-01 10:21:00 到 10:26:00，traceId=trace-202609010081。5 分钟内失败率超过 20%，日志出现 NullPointerException。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010081"
+      },
+      "annotations": {
+        "description": "5 分钟内失败率超过 20%，日志出现 NullPointerException",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查日志",
+        "看代码",
+        "查大盘",
+        "检索知识库",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-083",
+      "severity": "P2",
+      "alertType": "PROBLEM",
+      "title": "自助点餐依赖调用超时",
+      "query": "P2 PROBLEM 告警：自助点餐依赖调用超时。服务 menu-service，接口 /booking/reserve，城市 成都，时间窗口 2026-09-01 10:22:00 到 10:27:00，traceId=trace-202609010082。下游 RPC P99 延迟升高，少量请求失败。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010082"
+      },
+      "annotations": {
+        "description": "下游 RPC P99 延迟升高，少量请求失败",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查日志",
+        "查依赖大盘",
+        "检索 Runbook"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-084",
+      "severity": "P3",
+      "alertType": "PROBLEM",
+      "title": "结算慢查询增多",
+      "query": "P3 PROBLEM 告警：结算慢查询增多。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 深圳，时间窗口 2026-09-01 10:23:00 到 10:28:00，traceId=trace-202609010083。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010083"
+      },
+      "annotations": {
+        "description": "慢查询数量轻微升高，暂未影响核心指标",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "查日志",
+        "查数据库大盘",
+        "记录台账"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-085",
+      "severity": "P0",
+      "alertType": "BUSINESS",
+      "title": "团购券核销支付成功率断崖",
+      "query": "P0 BUSINESS 告警：团购券核销支付成功率断崖。服务 coupon-service，接口 /coupon/verify，城市 杭州，时间窗口 2026-09-01 10:24:00 到 10:29:00，traceId=trace-202609010084。支付成功率 10 分钟内从 98% 降到 65%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010084"
+      },
+      "annotations": {
+        "description": "支付成功率 10 分钟内从 98% 降到 65%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据口径",
+        "查上下游漏斗",
+        "通知值班"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-086",
+      "severity": "P1",
+      "alertType": "BUSINESS",
+      "title": "团购套餐核销成功率下降",
+      "query": "P1 BUSINESS 告警：团购套餐核销成功率下降。服务 deal-service，接口 /deal/query，城市 北京，时间窗口 2026-09-01 10:25:00 到 10:30:00，traceId=trace-202609010085。团购券核销成功率下降 18%，影响多个城市。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010085"
+      },
+      "annotations": {
+        "description": "团购券核销成功率下降 18%，影响多个城市",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查业务大盘",
+        "查接口错误",
+        "检索业务 SOP"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-087",
+      "severity": "P2",
+      "alertType": "BUSINESS",
+      "title": "支付订单量异常波动",
+      "query": "P2 BUSINESS 告警：支付订单量异常波动。服务 payment-service，接口 /pay/submit，城市 上海，时间窗口 2026-09-01 10:26:00 到 10:31:00，traceId=trace-202609010086。订单量环比下降 25%，需确认活动和统计延迟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010086"
+      },
+      "annotations": {
+        "description": "订单量环比下降 25%，需确认活动和统计延迟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查业务大盘",
+        "查数据延迟",
+        "联系业务 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-088",
+      "severity": "P3",
+      "alertType": "BUSINESS",
+      "title": "订单指标轻微抖动",
+      "query": "P3 BUSINESS 告警：订单指标轻微抖动。服务 order-service，接口 /order/create，城市 成都，时间窗口 2026-09-01 10:27:00 到 10:32:00，traceId=trace-202609010087。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010087"
+      },
+      "annotations": {
+        "description": "转化率低于日常均值 5%，未触发资损",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "BUSINESS 告警处理 SOP"
+      ],
+      "expectedRoute": "BUSINESS",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录趋势",
+        "查历史波动",
+        "观察"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-089",
+      "severity": "P0",
+      "alertType": "EVENT",
+      "title": "餐饮预定发布后核心接口不可用",
+      "query": "P0 EVENT 告警：餐饮预定发布后核心接口不可用。服务 booking-service，接口 /booking/reserve，城市 深圳，时间窗口 2026-09-01 10:28:00 到 10:33:00，traceId=trace-202609010088。发布后 3 分钟核心接口错误率暴涨。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "booking-service",
+        "business": "餐饮预定",
+        "endpoint": "/booking/reserve",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010088"
+      },
+      "annotations": {
+        "description": "发布后 3 分钟核心接口错误率暴涨",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "餐饮预定接口文档",
+        "booking-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "关联发布",
+        "查变更",
+        "建议回滚",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-090",
+      "severity": "P1",
+      "alertType": "EVENT",
+      "title": "团购支付配置变更影响业务",
+      "query": "P1 EVENT 告警：团购支付配置变更影响业务。服务 groupbuy-payment-service，接口 /groupbuy/payment/checkout，城市 杭州，时间窗口 2026-09-01 10:29:00 到 10:34:00，traceId=trace-202609010089。限流配置变更后部分商家无法核销。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-payment-service",
+        "business": "团购支付",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010089"
+      },
+      "annotations": {
+        "description": "限流配置变更后部分商家无法核销",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购支付接口文档",
+        "groupbuy-payment-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "关联配置",
+        "查影响范围",
+        "通知 Owner"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-091",
+      "severity": "P2",
+      "alertType": "EVENT",
+      "title": "品牌会员卡定时任务延迟",
+      "query": "P2 EVENT 告警：品牌会员卡定时任务延迟。服务 member-card-service，接口 /coupon/verify，城市 北京，时间窗口 2026-09-01 10:30:00 到 10:35:00，traceId=trace-202609010090。优惠券同步任务延迟 30 分钟。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "member-card-service",
+        "business": "品牌会员卡",
+        "endpoint": "/coupon/verify",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010090"
+      },
+      "annotations": {
+        "description": "优惠券同步任务延迟 30 分钟",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "品牌会员卡接口文档",
+        "member-card-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查任务状态",
+        "查依赖",
+        "记录事件"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-092",
+      "severity": "P3",
+      "alertType": "EVENT",
+      "title": "团购履约配送容量调整完成",
+      "query": "P3 EVENT 告警：团购履约配送容量调整完成。服务 groupbuy-delivery-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:31:00 到 10:36:00，traceId=trace-202609010091。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "groupbuy-delivery-service",
+        "business": "团购履约配送",
+        "endpoint": "/deal/query",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010091"
+      },
+      "annotations": {
+        "description": "扩容事件完成，指标正常",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购履约配送接口文档",
+        "groupbuy-delivery-service Runbook",
+        "EVENT 告警处理 SOP"
+      ],
+      "expectedRoute": "EVENT",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "观察指标"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-093",
+      "severity": "P0",
+      "alertType": "HOST",
+      "title": "到店自提集群节点大面积不可用",
+      "query": "P0 HOST 告警：到店自提集群节点大面积不可用。服务 pickup-service，接口 /pay/submit，城市 成都，时间窗口 2026-09-01 10:32:00 到 10:37:00，traceId=trace-202609010092。多个节点 NotReady，核心服务副本不足。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "pickup-service",
+        "business": "到店自提",
+        "endpoint": "/pay/submit",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010092"
+      },
+      "annotations": {
+        "description": "多个节点 NotReady，核心服务副本不足",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "到店自提接口文档",
+        "pickup-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查主机",
+        "查容器",
+        "摘流",
+        "扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-094",
+      "severity": "P1",
+      "alertType": "HOST",
+      "title": "门店磁盘水位过高",
+      "query": "P1 HOST 告警：门店磁盘水位过高。服务 shop-service，接口 /order/create，城市 深圳，时间窗口 2026-09-01 10:33:00 到 10:38:00，traceId=trace-202609010093。实例磁盘使用率 96%，日志写入失败风险。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "shop-service",
+        "business": "门店",
+        "endpoint": "/order/create",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010093"
+      },
+      "annotations": {
+        "description": "实例磁盘使用率 96%，日志写入失败风险",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "门店接口文档",
+        "shop-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查磁盘",
+        "清理日志",
+        "迁移实例"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-095",
+      "severity": "P2",
+      "alertType": "HOST",
+      "title": "自助点餐CPU 饱和",
+      "query": "P2 HOST 告警：自助点餐CPU 饱和。服务 menu-service，接口 /booking/reserve，城市 杭州，时间窗口 2026-09-01 10:34:00 到 10:39:00，traceId=trace-202609010094。CPU 使用率连续 15 分钟超过 85%。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "menu-service",
+        "business": "自助点餐",
+        "endpoint": "/booking/reserve",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010094"
+      },
+      "annotations": {
+        "description": "CPU 使用率连续 15 分钟超过 85%",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "自助点餐接口文档",
+        "menu-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查进程",
+        "查大盘",
+        "评估扩容"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-096",
+      "severity": "P3",
+      "alertType": "HOST",
+      "title": "结算容器重启",
+      "query": "P3 HOST 告警：结算容器重启。服务 settlement-service，接口 /groupbuy/payment/checkout，城市 北京，时间窗口 2026-09-01 10:35:00 到 10:40:00，traceId=trace-202609010095。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "settlement-service",
+        "business": "结算",
+        "endpoint": "/groupbuy/payment/checkout",
+        "city": "北京",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010095"
+      },
+      "annotations": {
+        "description": "单实例发生一次重启，已自动恢复",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "结算接口文档",
+        "settlement-service Runbook",
+        "HOST 告警处理 SOP"
+      ],
+      "expectedRoute": "HOST",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "记录台账",
+        "查重启原因"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-097",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "title": "团购券核销核心链路不可用",
+      "query": "P0 PROBLEM 告警：团购券核销核心链路不可用。服务 coupon-service，接口 /coupon/verify，城市 上海，时间窗口 2026-09-01 10:36:00 到 10:41:00，traceId=trace-202609010096。5xx 错误率超过 60%，多个入口接口超时。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "coupon-service",
+        "business": "团购券核销",
+        "endpoint": "/coupon/verify",
+        "city": "上海",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010096"
+      },
+      "annotations": {
+        "description": "5xx 错误率超过 60%，多个入口接口超时",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购券核销接口文档",
+        "coupon-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P0",
+      "expectedSteps": [
+        "查日志",
+        "查 Trace 链路",
+        "看代码",
+        "查大盘",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-098",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "title": "团购套餐接口异常升高",
+      "query": "P1 PROBLEM 告警：团购套餐接口异常升高。服务 deal-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:37:00 到 10:42:00，traceId=trace-202609010097。5 分钟内失败率超过 20%，日志出现 NullPointerException。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "deal-service",
+        "business": "团购套餐",
+        "endpoint": "/deal/query",
+        "city": "成都",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010097"
+      },
+      "annotations": {
+        "description": "5 分钟内失败率超过 20%，日志出现 NullPointerException",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "团购套餐接口文档",
+        "deal-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P1",
+      "expectedSteps": [
+        "查日志",
+        "看代码",
+        "查大盘",
+        "检索知识库",
+        "生成证据链报告"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-099",
+      "severity": "P2",
+      "alertType": "PROBLEM",
+      "title": "支付依赖调用超时",
+      "query": "P2 PROBLEM 告警：支付依赖调用超时。服务 payment-service，接口 /pay/submit，城市 深圳，时间窗口 2026-09-01 10:38:00 到 10:43:00，traceId=trace-202609010098。下游 RPC P99 延迟升高，少量请求失败。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "payment-service",
+        "business": "支付",
+        "endpoint": "/pay/submit",
+        "city": "深圳",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010098"
+      },
+      "annotations": {
+        "description": "下游 RPC P99 延迟升高，少量请求失败",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "支付接口文档",
+        "payment-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P2",
+      "expectedSteps": [
+        "查日志",
+        "查依赖大盘",
+        "检索 Runbook"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    },
+    {
+      "id": "alert-eval-100",
+      "severity": "P3",
+      "alertType": "PROBLEM",
+      "title": "订单慢查询增多",
+      "query": "P3 PROBLEM 告警：订单慢查询增多。服务 order-service，接口 /order/create，城市 杭州，时间窗口 2026-09-01 10:39:00 到 10:44:00，traceId=trace-202609010099。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "labels": {
+        "service": "order-service",
+        "business": "订单",
+        "endpoint": "/order/create",
+        "city": "杭州",
+        "env": "prod",
+        "owner": "到店餐饮值班组",
+        "traceId": "trace-202609010099"
+      },
+      "annotations": {
+        "description": "慢查询数量轻微升高，暂未影响核心指标",
+        "expected_report_language": "中文",
+        "need_evidence_chain": "true"
+      },
+      "expectedDocs": [
+        "订单接口文档",
+        "order-service Runbook",
+        "PROBLEM 告警处理 SOP"
+      ],
+      "expectedRoute": "PROBLEM",
+      "expectedPriority": "P3",
+      "expectedSteps": [
+        "查日志",
+        "查数据库大盘",
+        "记录台账"
+      ],
+      "expectedEvidence": [
+        "告警原文",
+        "服务标签",
+        "时间窗口",
+        "traceId",
+        "Runbook 或 SOP 引用"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+FROM ./evoharness-alert-qwen2.5-7b-q4_k_m.gguf
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""
+
+SYSTEM """
+你是 EvoHarnessAlert 运维告警助手，面向 SRE、运维和值班工程师。
+你需要根据告警标题、描述、标签、注解和历史上下文，输出简洁、可靠、可执行的告警研判。
+你的重点是：告警定级、影响范围、可能根因、验证步骤、止血建议、升级条件和通知摘要。
+不要臆造确定性根因；证据不足时使用“可能”“建议验证”。
+不要输出或扩散密码、Token、密钥、连接串等敏感信息；如告警内容包含敏感字段，应提醒脱敏。
+遇到 P1/CRITICAL 告警时，优先给出止血动作、负责人升级建议和用户影响判断。
+"""
+
+PARAMETER temperature 0.2
+PARAMETER top_p 0.85
+PARAMETER repeat_penalty 1.08
+PARAMETER num_predict 512
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
