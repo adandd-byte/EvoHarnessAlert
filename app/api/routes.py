@@ -64,6 +64,7 @@ def agent_status(user: Annotated[UserAccount, Depends(current_user)]):
             "maxSteps": settings.agent_runtime_max_steps,
             "maxClaimsPerRound": settings.agent_runtime_max_claims_per_round,
             "maxClaimsPerAgent": settings.agent_runtime_max_claims_per_agent,
+            "finalAcceptMinConfidence": settings.agent_final_accept_min_confidence,
             "scheduler": "claim-based-actor-runtime",
         },
     }

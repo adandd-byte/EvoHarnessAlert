@@ -369,40 +369,90 @@ Context artifact 可以包含：`memory_brief`、`model_history`、`knowledge_qu
 
 ## 7. 事件驱动 Runtime
 
-### 7.1 请求从哪里进入
+### 7.1 Runtime 的入口是 Factory
 
-当前已实现的主入口在 `app/api/routes.py`：
+当前代码里的 Runtime 入口是 `app/agents/factory.py`。Factory 负责屏蔽具体 Runtime 实现，调用方只需要调用 `create_agent_runtime(db, settings)`，就能拿到 `EventDrivenAgentRuntimeService`。
+
+代码结构可以理解成：
+
+```text
+app/agents/factory.py
+-> from app.agents.event_driven_runtime import EventDrivenAgentRuntimeService
+-> return EventDrivenAgentRuntimeService(db=db, settings=settings)
+```
+
+默认配置在 `app/core/config.py`：
+
+| 配置 | 中文含义 | 默认值 |
+| --- | --- | --- |
+| `AGENT_FRAMEWORK` | Agent 框架类型 | `event_driven_multi_agent` |
+| `AGENT_RUNTIME_MAX_STEPS` | Coordinator 最大轮数 | `8` |
+| `AGENT_RUNTIME_MAX_CLAIMS_PER_ROUND` | 每轮最多选择多少个 claim | `4` |
+| `AGENT_RUNTIME_MAX_CLAIMS_PER_AGENT` | 同一个 Agent 最多 claim 几次 | `3` |
+| `AGENT_FINAL_ACCEPT_MIN_CONFIDENCE` | 最终采纳的最低置信度 | `0.6` |
+
+这些值决定 Runtime 的边界：它不是无限循环。Coordinator 最多跑 8 轮，每轮最多选择 4 个 claim，同一个 Agent 最多 claim 3 次。候选回复的 confidence 低于 0.6 时，即使 SafetyAgent 审查通过，也不应该被最终采纳。当前 `/api/agent/status` 会暴露这些预算配置，方便后台确认运行边界。
+
+### 7.2 一轮请求从哪里进入 Runtime
+
+当前已经实现的生产主入口是告警接入接口：
 
 - `POST /api/alerts/webhook`
 - `POST /api/alerts/prometheus`
 
-路由调用 `AlertIngestService`，完成标准化、入库、事件聚合、Trace 保存和 ToolJob 创建。
+这条链路进入 `AlertIngestService`，完成脱敏、标准化、Incident 聚合、AgentRunTrace 和 ToolJob。也就是说，当前第一版的“Alert Agent Handler / Harness”主要收敛在 `app/services/alerting.py`。
 
-一轮请求进入 Runtime 的逻辑图：
+对话式入口属于生产扩展方向，推荐接口是 `POST /api/chat/stream`。它适合前端或群机器人把一段告警文本贴进来，然后通过 SSE 逐 token 返回报告。推荐链路如下：
+
+```text
+POST /api/chat/stream
+-> ChatService.stream_chat
+-> AlertAgentHandler.run
+-> create_agent_runtime(db, settings).run
+-> EventDrivenCoordinator.run_board
+-> AgentRunResult
+-> AIClient.stream_response_messages
+-> SSE token 下发
+-> 保存助手消息
+-> 派发 Tool Plan
+-> SSE done
+```
+
+这里要注意边界：ChatService 不负责判断意图，不负责创建告警报告，也不直接写台账或发送预警。它主要做三件事：调用 Handler、拿到 Runtime 准备好的 response messages、用 AIClient stream 把最终文本逐 token 发给前端。
+
+真正的一轮业务变换发生在 AlertAgentHandler / AlertAgentHarness：输入脱敏、会话解析、调用 Runtime、保存用户消息、生成告警报告、写入 Trace、生成工具计划。这样 HTTP 层很薄，Runtime 也不用关心数据库报告怎么建、工具任务怎么派发。
+
+### 7.3 一轮请求进入 Runtime 的逻辑图
 
 ```mermaid
 sequenceDiagram
-    participant U as 用户/监控系统
+    participant U as 用户/监控系统/群机器人
     participant API as FastAPI Routes
-    participant H as AlertIngestService / Harness
+    participant H as AlertAgentHandler / Harness
+    participant F as Runtime Factory
+    participant R as EventDrivenAgentRuntimeService
+    participant C as EventDrivenCoordinator
     participant BB as Blackboard 黑板
-    participant A as 多 Agent
     participant DB as MySQL
     participant Q as Tool Queue
 
-    U->>API: 提交告警文本或 Webhook Payload
-    API->>H: 调用 ingest_webhook / ingest_prometheus
-    H->>H: 脱敏、标准化、生成 fingerprint
-    H->>DB: 保存 AlertEvent
-    H->>BB: 写入告警事实、labels、annotations
-    BB->>A: Agent 按类型认领任务
-    A->>BB: 写入日志/代码/指标/知识库证据
-    H->>DB: 保存 Incident 与 AgentRunTrace
-    H->>Q: 创建 Ledger / Incident / Notification 任务
-    Q->>DB: 写台账、通知记录、死信记录
+    U->>API: 提交结构化告警或对话式告警文本
+    API->>H: 调用告警 Handler
+    H->>H: 脱敏、会话解析、权限边界
+    H->>F: create_agent_runtime(db, settings)
+    F->>R: 返回 EventDrivenAgentRuntimeService
+    R->>BB: 创建 turn_id/user_id/session_id/model_input/root task
+    R->>C: run_board
+    C->>BB: 创建任务、收集 claim、控制预算
+    BB->>C: 返回 artifacts/events/tasks
+    C->>R: AgentRunResult
+    R->>H: 返回 response messages 和黑板过程
+    H->>DB: 保存 AlertEvent/Incident/AgentRunTrace/消息
+    H->>Q: 生成 Ledger/Notification/Incident 工具计划
+    H->>API: 返回 JSON 或 SSE token
 ```
 
-### 7.2 Harness 与 Runtime 边界
+### 7.4 Harness 与 Runtime 边界
 
 推荐边界是：Harness 管业务接入，Runtime 管 Agent 协作。
 
@@ -422,11 +472,11 @@ flowchart TD
     E --> G[Runtime 初始化]
     F --> G
     G --> H[创建 Blackboard: turn_id/user_id/session_id/original_input/model_input]
-    H --> I[Coordinator 创建任务]
+    H --> I[Coordinator 创建 Root Task]
     I --> J[Understanding/Triage 识别意图、P0-P3、类型]
     I --> K[Safety 脱敏检查和高风险动作门控]
-    I --> L[Context 检索日志线索、Runbook、历史事件]
-    I --> M[Response 生成报告草稿]
+    I --> L[Context 检索 Memory、Runbook、历史事件]
+    I --> M[Response 生成候选报告]
     J --> N[Runtime 返回 AgentRunResult]
     K --> N
     L --> N
@@ -438,9 +488,7 @@ flowchart TD
 
 在多租户场景里，还需要把 `tenant_id/team_id` 放进用户、会话、告警、Incident 和工具调用审计里。到店餐饮组只处理自己负责的团购、闪惠、预定、核销服务；如果 Trace 发现是上游或下游团队的问题，系统应该生成“跨团队同步建议”，推送到大群或工单，而不是让本组越权处理别人的服务。
 
-当前第一版把 Alert Agent Harness 的核心职责收敛在 `AlertIngestService` 中，`app/agents/*` 保留为兼容占位。后续如果恢复完整 Runtime，可以把 `handling_steps()` 中的静态步骤升级为真正的 Agent 执行循环，并返回 `AgentRunResult`：intent、priority、alert_type、assessment、retrieved_knowledge、messages、agent_steps、memory_summary、blackboard events/tasks/artifacts 和 final_artifact_id。
-
-### 7.3 黑板核心状态
+### 7.5 黑板核心状态
 
 黑板中应该包含：
 
@@ -455,17 +503,17 @@ flowchart TD
 - 工具调用结果
 - 最终报告
 
-### 7.4 Claim-based Scheduler
+### 7.6 Claim-based Scheduler
 
 Claim-based Scheduler 的核心思想是“让最合适的 Agent 认领当前任务”。例如 PROBLEM 告警出现后，LogQueryAgent、CodeAnalysisAgent、MetricsAgent、KnowledgeAgent 会分别认领自己的任务；BUSINESS 告警则更偏向 BusinessMetricAgent 和 DataQualityAgent。
 
-这和普通单 Agent 最大区别在于：单 Agent 往往串行思考和工具调用，而告警场景需要多证据并行补齐、交叉验证和审计留痕。
+这和普通单 Agent 最大区别在于：单 Agent 往往串行思考和工具调用，而告警场景需要多证据并行补齐、交叉验证和审计留痕。Runtime 有轮数和 claim 次数限制，避免无限循环。
 
-### 7.5 普通聊天和告警链路的区别
+### 7.7 普通聊天和告警链路的区别
 
-普通聊天追求自然回答；告警链路追求事实、证据、可执行动作和责任边界。告警系统不能只输出“可能是数据库问题”，而要说明依据是什么、还缺什么证据、下一步查哪里、是否需要升级、是否允许自动执行。
+普通聊天追求自然回答；告警链路追求事实、证据、可执行动作和责任边界。普通 Chat 不会进入 RAG，不会生成告警报告，也不会触发后台工具队列。告警链路不能只输出“可能是数据库问题”，而要说明依据是什么、还缺什么证据、下一步查哪里、是否需要升级、是否允许自动执行。
 
-### 7.6 Trace 链路和代码 Agent
+### 7.8 Trace 链路和代码 Agent
 
 真实链路里，一次请求可能穿过上百个微服务，值班人员通常只负责其中几个服务。因此告警报告必须把 `traceId`、入口接口、上下游服务、异常 span、错误日志和代码模块串起来。Trace 的作用不是“多一个字段”，而是帮助判断问题到底在本组、上游、下游还是基础设施。
 
@@ -478,7 +526,7 @@ Claim-based Scheduler 的核心思想是“让最合适的 Agent 认领当前任
 5. 把代码片段作为证据写回黑板，不直接让模型改生产代码。
 6. 如果建议修复，需要人工确认后再生成 PR，并走 CI、Code Review、灰度和回滚预案。
 
-### 7.7 为什么 Runtime 适合 Alert
+### 7.9 为什么 Runtime 适合 Alert
 
 Alert 系统天然是事件驱动的：告警触发、事件聚合、工具查询、通知发送、人工确认、自动修复、复盘更新，每一步都是事件。黑板式 Runtime 可以把这些事件组织起来，让系统既能自动化推进，也能留下完整审计链。
 

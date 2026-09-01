@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     agent_runtime_max_steps: int = 8
     agent_runtime_max_claims_per_round: int = 4
     agent_runtime_max_claims_per_agent: int = 3
+    agent_final_accept_min_confidence: float = 0.6
     ai_provider: str = "mock"
     ai_temperature: float = 0.2
     ai_max_tokens: int = 512

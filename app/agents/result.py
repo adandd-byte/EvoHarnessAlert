@@ -3,9 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.core.enums import IntentType, RiskLevel
+from app.core.enums import AlertType, Severity
 from app.schemas.dtos import AiMessage
-from app.services.assessment import PsychologyAssessment
 from app.services.knowledge import SearchResult
 
 
@@ -19,9 +18,11 @@ class AgentStep:
 
 @dataclass
 class AgentRunResult:
-    intent: IntentType
-    risk_level: RiskLevel
-    assessment: PsychologyAssessment | None
+    intent: str
+    priority: Severity | str
+    alert_type: AlertType | str
+    risk_level: str
+    assessment: dict[str, Any] | None
     retrieved_knowledge: list[SearchResult]
     response_messages: list[AiMessage]
     steps: list[AgentStep]
@@ -32,4 +33,4 @@ class AgentRunResult:
 
     @property
     def requires_report(self) -> bool:
-        return self.intent != IntentType.CHAT
+        return self.intent != "CHAT"

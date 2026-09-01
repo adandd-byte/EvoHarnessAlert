@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+from typing import Any
 
-class AlertRuntimePlaceholder:
-    def run(self, *args, **kwargs):
-        raise RuntimeError("告警接入主链路使用 app.services.alerting，不再通过聊天 runtime 执行。")
-
-
-def create_agent_runtime(*args, **kwargs) -> AlertRuntimePlaceholder:
-    return AlertRuntimePlaceholder()
+from app.agents.event_driven_runtime import EventDrivenAgentRuntimeService
+from app.core.config import Settings
 
 
-def agent_framework_status(settings) -> dict:
-    return {"requested": getattr(settings, "agent_framework", "event_driven_multi_agent"), "active": "event_driven_multi_agent", "available": ["event_driven_multi_agent"], "fallback": False}
+def create_agent_runtime(db: Any = None, settings: Settings | None = None) -> EventDrivenAgentRuntimeService:
+    return EventDrivenAgentRuntimeService(db=db, settings=settings)
+
+
+def agent_framework_status(settings: Settings) -> dict:
+    return {
+        "requested": getattr(settings, "agent_framework", "event_driven_multi_agent"),
+        "active": "event_driven_multi_agent",
+        "available": ["event_driven_multi_agent"],
+        "fallback": False,
+    }
