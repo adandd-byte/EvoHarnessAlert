@@ -488,32 +488,64 @@ flowchart TD
 
 在多租户场景里，还需要把 `tenant_id/team_id` 放进用户、会话、告警、Incident 和工具调用审计里。到店餐饮组只处理自己负责的团购、闪惠、预定、核销服务；如果 Trace 发现是上游或下游团队的问题，系统应该生成“跨团队同步建议”，推送到大群或工单，而不是让本组越权处理别人的服务。
 
-### 7.5 黑板核心状态
+### 7.5 黑板 / Runtime 的核心状态
 
-黑板中应该包含：
+黑板定义在 `app/agents/events.py`，类名是 `CollaborationBlackboard`。它保存 `tasks`、`messages`、`artifacts`、`events` 和 `final_artifact_id`。这套 Runtime 里 Agent 不是互相调用对方方法，而是通过黑板协作：一个 Agent 想做事，先 claim 一个 task；做完后返回 `AgentTurnResult`，里面可以包含 messages、artifacts、tasks、events 和 close_task；黑板再把执行结果整合进去。
 
-- 原始告警 payload
-- 标准化 AlertEvent
-- P0/P1/P2/P3 优先级
-- PROBLEM/BUSINESS/EVENT/HOST 类型
-- labels、annotations、fingerprint
-- Incident 聚合信息
-- 日志证据、代码证据、指标证据、知识库证据
-- Agent artifacts
-- 工具调用结果
-- 最终报告
+核心数据结构：
 
-### 7.6 Claim-based Scheduler
+| 数据结构 | 中文解释 | 例子 |
+| --- | --- | --- |
+| `AgentTask` | 待办事项 | 理解输入、评估风险、准备上下文、生成候选回复、审查候选回复。 |
+| `AgentArtifact` | 结构化产物 | Intent、Risk、Context、Response Proposal、Safety Review。 |
+| `AgentMessage` | Agent 协作消息 | ResponseAgent 请求 SafetyAgent 审查候选回复。 |
+| `AgentEvent` | 协作事件 | 任务创建、任务认领、Artifact 发布、安全覆盖、最终采纳。 |
+| `AgentTurnResult` | 单个 Agent 一次执行结果 | 本轮新增的消息、产物、任务和是否关闭当前任务。 |
 
-Claim-based Scheduler 的核心思想是“让最合适的 Agent 认领当前任务”。例如 PROBLEM 告警出现后，LogQueryAgent、CodeAnalysisAgent、MetricsAgent、KnowledgeAgent 会分别认领自己的任务；BUSINESS 告警则更偏向 BusinessMetricAgent 和 DataQualityAgent。
+典型 artifact：UnderstandingAgent 发布 `intent`，SafetyAgent 发布 `risk` 或 `safety_override`，ContextAgent 发布 `context`，ResponseAgent 发布 `response_proposal`，SafetyAgent 审查后发布 `safety_review`。
+
+黑板方法大多返回新对象，不直接修改旧对象。例如 `add_task()`、`append_event()`、`add_artifact()` 都会返回新的 `CollaborationBlackboard`。这样 Trace 看到的是一串真实发生过的协作记录，而不是一个被不断覆盖的状态对象。测试里也覆盖了这一点：旧 board 不会因为新 task、event 或 artifact 被改掉。
+
+### 7.6 Coordinator 怎么调度
+
+调度逻辑在 `app/agents/coordinator.py` 的 `EventDrivenCoordinator`。每轮开始时，Coordinator 会保证 Root Task 存在；如果输入命中 P0/P1 这类高优先级告警，Root Task 会是更高优先级。之后每一轮按这个节奏推进：
+
+```text
+追加 ROUND_STARTED
+-> derive_missing_work 派生缺失任务
+-> 尝试执行可认领任务
+-> 合并 AgentTurnResult
+-> 再次尝试最终采纳
+-> 达到最终采纳或耗尽轮数预算后结束
+```
+
+`derive_missing_work` 会看黑板上缺哪些 artifact，然后补对应任务：
+
+| 缺失内容 | 派生任务 | 所需能力 | 期望产物 |
+| --- | --- | --- | --- |
+| 缺 intent | `task_understand` | UNDERSTANDING | `intent` |
+| 缺 risk | `task_assess_safety` | SAFETY | `risk` |
+| intent/risk 表明需要上下文 | `task_gather_context` | CONTEXT | `context` |
+| intent/risk 已具备 | `task_response` | RESPONSE | `response_proposal` |
+| 新候选回复未审查 | `task_review_response` | SAFETY | `safety_review` |
+
+最终采纳不是 ResponseAgent 说了算。Coordinator 只有在这些条件同时成立时才会调用 `accept_final()`：存在最新 `response_proposal`；存在指向该 proposal 的 `safety_review`；`safety_review.approved=true`；`response_proposal.confidence >= AGENT_FINAL_ACCEPT_MIN_CONFIDENCE`。当前默认阈值是 0.6，轻量 Runtime 中 ResponseAgent 候选回复 confidence 是 0.86，SafetyAgent 审查 confidence 是 0.95，所以审查通过时通常可以被采纳。
+
+### 7.7 Claim-based Scheduler
+
+Claim-based Scheduler 的核心思想是“让最合适的 Agent 认领当前任务”。在 `AgentRegistry` 中，系统会遍历剩余 task，先按 required capability 过滤 Agent，再调用 `agent.decide(task, board)`。如果 `AgentDecision.claim=true`，它就进入候选列表，候选列表按 confidence 从高到低排序。
+
+Coordinator 还会综合 task priority、decision confidence 和 agent 名称排序。Runtime 不是固定流水线，不是永远先 Understanding 再 Safety 再 Context 再 Response；真实顺序由任务和 claim 决定。只是因为一轮请求刚开始通常缺 intent 和 risk，所以 UnderstandingAgent 和 SafetyAgent 往往先工作。到了明确告警研判时，ContextAgent 才加入；ResponseAgent 会等 intent 和 risk 至少准备好后再提出候选回复。
+
+调度还有预算限制：每轮最多 `AGENT_RUNTIME_MAX_CLAIMS_PER_ROUND=4` 个 claim，同一个 Agent 整个运行最多 `AGENT_RUNTIME_MAX_CLAIMS_PER_AGENT=3` 次，避免某个 Agent 一直认为自己有事做，占满整个 Runtime。
 
 这和普通单 Agent 最大区别在于：单 Agent 往往串行思考和工具调用，而告警场景需要多证据并行补齐、交叉验证和审计留痕。Runtime 有轮数和 claim 次数限制，避免无限循环。
 
-### 7.7 普通聊天和告警链路的区别
+### 7.8 普通聊天和告警链路的区别
 
 普通聊天追求自然回答；告警链路追求事实、证据、可执行动作和责任边界。普通 Chat 不会进入 RAG，不会生成告警报告，也不会触发后台工具队列。告警链路不能只输出“可能是数据库问题”，而要说明依据是什么、还缺什么证据、下一步查哪里、是否需要升级、是否允许自动执行。
 
-### 7.8 Trace 链路和代码 Agent
+### 7.9 Trace 链路和代码 Agent
 
 真实链路里，一次请求可能穿过上百个微服务，值班人员通常只负责其中几个服务。因此告警报告必须把 `traceId`、入口接口、上下游服务、异常 span、错误日志和代码模块串起来。Trace 的作用不是“多一个字段”，而是帮助判断问题到底在本组、上游、下游还是基础设施。
 
@@ -526,7 +558,7 @@ Claim-based Scheduler 的核心思想是“让最合适的 Agent 认领当前任
 5. 把代码片段作为证据写回黑板，不直接让模型改生产代码。
 6. 如果建议修复，需要人工确认后再生成 PR，并走 CI、Code Review、灰度和回滚预案。
 
-### 7.9 为什么 Runtime 适合 Alert
+### 7.10 为什么 Runtime 适合 Alert
 
 Alert 系统天然是事件驱动的：告警触发、事件聚合、工具查询、通知发送、人工确认、自动修复、复盘更新，每一步都是事件。黑板式 Runtime 可以把这些事件组织起来，让系统既能自动化推进，也能留下完整审计链。
 

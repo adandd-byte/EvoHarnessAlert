@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from app.agents.events import AgentEvent, AgentEventType, AgentTask, CollaborationBlackboard, TaskPriority
+from app.agents.coordinator import EventDrivenCoordinator
 from app.agents.result import AgentRunResult, AgentStep
 from app.core.config import Settings, get_settings
 from app.core.enums import AlertType, Severity
@@ -25,6 +26,7 @@ class EventDrivenAgentRuntimeService:
         self.db = db
         self.settings = settings or get_settings()
         self.sanitizer = PrivacySanitizer()
+        self.coordinator = EventDrivenCoordinator(self.settings)
 
     def run(
         self,
@@ -44,12 +46,15 @@ class EventDrivenAgentRuntimeService:
         intent = "ALERT" if explicit_priority or _looks_like_alert(model_input) else "CHAT"
         risk_level = _risk_from_priority(priority)
         board = self._new_board(user_id, session_id, user_input, model_input, intent, priority, alert_type)
+        coordinator_run = self.coordinator.run_board(board)
+        accepted = coordinator_run.board.accepted_artifact()
         steps = [
             AgentStep(1, "CoordinatorAgent", "创建 Root Task 并初始化黑板", f"turn_id={board.turn_id}"),
             AgentStep(2, "UnderstandingAgent", "发布 Intent Artifact", f"intent={intent}, alert_type={alert_type.value}"),
             AgentStep(3, "SafetyAgent", "完成风险评估和安全门槛检查", f"risk={risk_level}, priority={priority.value}"),
+            AgentStep(4, "EventDrivenCoordinator", "运行黑板任务调度并尝试最终采纳", f"rounds={coordinator_run.rounds}, final={bool(accepted)}"),
         ]
-        response = (
+        response = accepted.payload.get("content", "") if accepted else (
             f"已识别为 {priority.value}/{alert_type.value} 告警，请结合日志、Trace、指标和 Runbook 补齐证据链。"
             if intent == "ALERT"
             else "这是普通对话请求，当前不会触发 RAG、Incident 或工具队列。"
@@ -64,9 +69,9 @@ class EventDrivenAgentRuntimeService:
             response_messages=[AiMessage(role="assistant", content=response)],
             steps=steps,
             memory_brief="",
-            collaboration_events=list(board.events),
-            collaboration_tasks=list(board.tasks.values()),
-            collaboration_artifacts=list(board.artifacts),
+            collaboration_events=list(coordinator_run.board.events),
+            collaboration_tasks=list(coordinator_run.board.tasks.values()),
+            collaboration_artifacts=list(coordinator_run.board.artifacts),
         )
 
     def _new_board(
