@@ -345,6 +345,28 @@ Agent 之间的协作方式是黑板式：每个 Agent 不直接把全部上下�
 
 为什么不用一个 Agent 全做？因为告警研判涉及日志、代码、指标、知识库、发布、主机和通知，职责过多会导致 prompt 巨大、证据混乱、难以审计，也很难限制高风险工具权限。拆成多个 Agent 后，每个 Agent 的输入、输出、权限和模型都可以单独控制。
 
+默认事件驱动链路可以这样理解：`UnderstandingAgent` 先产出 intent，`SafetyAgent` 产出 risk，`CoordinatorAgent` 根据 intent/risk 判断是否需要 Context；需要时由 `ContextAgent` 准备 Memory、RAG 和 Skill，`ResponseAgent` 生成候选回复，`SafetyAgent` 再审查候选回复，最后由 `CoordinatorAgent` 采纳最终输出。
+
+ContextAgent 不是每轮都执行。普通闲聊、系统能力介绍、接口怎么用、名词解释这类请求仍会做意图判断和安全评估，但不会强行注入企业 RAG 和长历史。只有当 intent 明确是告警研判，或者 risk/priority 达到 Medium 及以上，或者任务显式要求上下文能力时，Coordinator 才会创建 Context 任务。这样可以避免把普通问答“告警化”，也能控制成本和延迟。
+
+ContextAgent 运行时的推荐步骤是：
+
+```text
+load_history
+-> 优先读 Redis 最近 40 条
+-> Redis miss 时从 MySQL ChatMessage 倒序读取最近 40 条
+-> 反转成正常对话顺序
+-> 脱敏后 replace 回 Redis
+-> compact_history_for_prompt 生成压缩历史和确定性摘要
+-> 尝试用模型生成 1-3 条中文记忆要点
+-> 摘要失败时回退到确定性摘要
+-> 根据 intent/risk 决定是否检索知识库和加载 Skill Context
+-> 产出 context artifact
+```
+
+Context artifact 可以包含：`memory_brief`、`model_history`、`knowledge_query`、`retrieved_knowledge`、`skill_context`、`primary_memory_key`。后面的 ResponseAgent 会读取这个 artifact，把记忆摘要、知识片段和 Skill 指引合进候选回复 prompt。
+
+
 ## 7. 事件驱动 Runtime
 
 ### 7.1 请求从哪里进入
@@ -549,9 +571,17 @@ Redis 保存短期记忆，当前代码落在 `app/services/memory.py` 的 `Redi
 
 `replace` 主要用于缓存回填：如果 Redis 没有某个 session 的短期记忆，但 MySQL 里有历史消息，系统可以从数据库取最近 40 条，转换成 AI message 后整批写回 Redis。下一轮请求就可以直接走 Redis，不必每次都查数据库。
 
-为什么 Redis 和 MySQL 要同时用？MySQL 是事实源，适合长期保存、审计、追责和后台查询；Redis 是热缓存，适合短期上下文、低延迟读取、TTL 自动释放和 SSE 流式会话状态。二者不是重复建设，而是一个负责“可信持久化”，一个负责“快速短记忆”。
+为什么 Redis 和 MySQL 要同时用？只用 Redis 不够，因为 Redis 有 TTL，也可能因为内存策略被清理，不适合承担完整审计、报告留档和人工复盘记录。在告警场景里，后续人工接手、管理员复盘、事件追责和报告归档都需要可靠记录，所以 MySQL 必须作为事实源。
+
+只用 MySQL 也不理想。每轮对话都从数据库拉长历史，再交给模型，会让读取、排序、脱敏和上下文构造变得很重。Redis 更适合保存最近的会话窗口，读写快，结构简单。EvoHarnessAlert 把两者分开：Redis 负责短期上下文，MySQL 负责完整业务记录；Redis miss 时从 MySQL 回填。这样既保留响应速度，也不会丢失长期留痕。
+
+这种分层也方便部署。开发或降级环境里，Redis 不可用时主链路仍然可以跑，只是短期记忆缓存能力下降；正式环境里，Redis 提供更好的短期记忆体验，MySQL 继续负责审计和后台流程。
 
 为什么 Agent 私有记忆要单独存在？因为不同 Agent 的中间思路不应该互相污染。LogQueryAgent 关心日志关键字和 traceId，CodeAnalysisAgent 关心代码路径和调用关系，SafetyAgent 关心敏感信息和高风险动作。如果全部混在一个上下文里，模型容易把未验证推测当事实，也会增加越权工具调用风险。
+
+在事件驱动版本里，除了会话短期记忆，还应该有 agent private memory，也就是“Agent 私有记忆”。它不是给用户建长期画像，而是给每个 Agent 保留自己的工作记录。例如 UnderstandingAgent 记录 `intent/topic`，SafetyAgent 记录 `risk_summary/review_approved/reason`，ContextAgent 记录 `context_intent/risk/retrieved_count`，ResponseAgent 记录 `response_mode/intent/risk`。这些记录可以写入隔离 key，格式类似 `agent:{agent_name}:{session_id}`，并复用 `RedisShortTermMemoryStore` 的裁剪、TTL 和脱敏逻辑。
+
+私有记忆的价值在于隔离：SafetyAgent 的风险记录不能直接变成客户端话术，ResponseAgent 的表达策略也不应该影响 UnderstandingAgent 的意图判断。后台可以记录 risk、confidence、summary，客户端只应该看到具体告警报告、证据链和处置建议。私有记忆把这些边界留在代码里，而不是只靠 prompt 自觉。
 
 为什么 List 要压缩？因为告警、日志、代码、指标、历史事件都可能很长，不控制长度就会让 Redis 和模型上下文一起膨胀。Redis list 只保留最近 40 条，模型输入再做二次筛选：保留服务名、时间窗口、traceId、异常指标、代码路径、Runbook 引用和日志证据，丢掉重复闲聊、过期状态和无证据推测。
 
