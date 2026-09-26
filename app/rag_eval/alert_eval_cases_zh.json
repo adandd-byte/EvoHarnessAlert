@@ -292,9 +292,9 @@
       "severity": "P3",
       "alertType": "BUSINESS",
       "title": "团购履约配送指标轻微抖动",
-      "query": "P3 BUSINESS 告警：团购履约配送指标轻微抖动。服务 groupbuy-delivery-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:07:00 到 10:12:00，traceId=trace-202609010007。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "query": "P3 BUSINESS 告警：团购履约配送指标轻微抖动。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:07:00 到 10:12:00，traceId=trace-202609010007。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "成都",
@@ -309,7 +309,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "BUSINESS 告警处理 SOP"
       ],
       "expectedRoute": "BUSINESS",
@@ -776,9 +776,9 @@
       "severity": "P3",
       "alertType": "PROBLEM",
       "title": "团购履约配送慢查询增多",
-      "query": "P3 PROBLEM 告警：团购履约配送慢查询增多。服务 groupbuy-delivery-service，接口 /deal/query，城市 杭州，时间窗口 2026-09-01 10:19:00 到 10:24:00，traceId=trace-202609010019。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "query": "P3 PROBLEM 告警：团购履约配送慢查询增多。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 杭州，时间窗口 2026-09-01 10:19:00 到 10:24:00，traceId=trace-202609010019。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "杭州",
@@ -793,7 +793,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "PROBLEM 告警处理 SOP"
       ],
       "expectedRoute": "PROBLEM",
@@ -1258,9 +1258,9 @@
       "severity": "P3",
       "alertType": "HOST",
       "title": "团购履约配送容器重启",
-      "query": "P3 HOST 告警：团购履约配送容器重启。服务 groupbuy-delivery-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:31:00 到 10:36:00，traceId=trace-202609010031。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "query": "P3 HOST 告警：团购履约配送容器重启。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:31:00 到 10:36:00，traceId=trace-202609010031。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "上海",
@@ -1275,7 +1275,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "HOST 告警处理 SOP"
       ],
       "expectedRoute": "HOST",
@@ -1743,9 +1743,9 @@
       "severity": "P3",
       "alertType": "EVENT",
       "title": "团购履约配送容量调整完成",
-      "query": "P3 EVENT 告警：团购履约配送容量调整完成。服务 groupbuy-delivery-service，接口 /deal/query，城市 深圳，时间窗口 2026-09-01 10:43:00 到 10:48:00，traceId=trace-202609010043。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "query": "P3 EVENT 告警：团购履约配送容量调整完成。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 深圳，时间窗口 2026-09-01 10:43:00 到 10:48:00，traceId=trace-202609010043。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "深圳",
@@ -1760,7 +1760,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "EVENT 告警处理 SOP"
       ],
       "expectedRoute": "EVENT",
@@ -2227,9 +2227,9 @@
       "severity": "P3",
       "alertType": "BUSINESS",
       "title": "团购履约配送指标轻微抖动",
-      "query": "P3 BUSINESS 告警：团购履约配送指标轻微抖动。服务 groupbuy-delivery-service，接口 /deal/query，城市 北京，时间窗口 2026-09-01 10:55:00 到 10:00:00，traceId=trace-202609010055。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
+      "query": "P3 BUSINESS 告警：团购履约配送指标轻微抖动。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 北京，时间窗口 2026-09-01 10:55:00 到 10:00:00，traceId=trace-202609010055。转化率低于日常均值 5%，未触发资损。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "北京",
@@ -2244,7 +2244,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "BUSINESS 告警处理 SOP"
       ],
       "expectedRoute": "BUSINESS",
@@ -2711,9 +2711,9 @@
       "severity": "P3",
       "alertType": "PROBLEM",
       "title": "团购履约配送慢查询增多",
-      "query": "P3 PROBLEM 告警：团购履约配送慢查询增多。服务 groupbuy-delivery-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:07:00 到 10:12:00，traceId=trace-202609010067。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
+      "query": "P3 PROBLEM 告警：团购履约配送慢查询增多。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 成都，时间窗口 2026-09-01 10:07:00 到 10:12:00，traceId=trace-202609010067。慢查询数量轻微升高，暂未影响核心指标。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "成都",
@@ -2728,7 +2728,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "PROBLEM 告警处理 SOP"
       ],
       "expectedRoute": "PROBLEM",
@@ -3193,9 +3193,9 @@
       "severity": "P3",
       "alertType": "HOST",
       "title": "团购履约配送容器重启",
-      "query": "P3 HOST 告警：团购履约配送容器重启。服务 groupbuy-delivery-service，接口 /deal/query，城市 杭州，时间窗口 2026-09-01 10:19:00 到 10:24:00，traceId=trace-202609010079。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
+      "query": "P3 HOST 告警：团购履约配送容器重启。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 杭州，时间窗口 2026-09-01 10:19:00 到 10:24:00，traceId=trace-202609010079。单实例发生一次重启，已自动恢复。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "杭州",
@@ -3210,7 +3210,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "HOST 告警处理 SOP"
       ],
       "expectedRoute": "HOST",
@@ -3678,9 +3678,9 @@
       "severity": "P3",
       "alertType": "EVENT",
       "title": "团购履约配送容量调整完成",
-      "query": "P3 EVENT 告警：团购履约配送容量调整完成。服务 groupbuy-delivery-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:31:00 到 10:36:00，traceId=trace-202609010091。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
+      "query": "P3 EVENT 告警：团购履约配送容量调整完成。服务 groupbuy-groupbuy-delivery-service，接口 /deal/query，城市 上海，时间窗口 2026-09-01 10:31:00 到 10:36:00，traceId=trace-202609010091。扩容事件完成，指标正常。请给出排查路径和证据链报告。",
       "labels": {
-        "service": "groupbuy-delivery-service",
+        "service": "groupbuy-groupbuy-delivery-service",
         "business": "团购履约配送",
         "endpoint": "/deal/query",
         "city": "上海",
@@ -3695,7 +3695,7 @@
       },
       "expectedDocs": [
         "团购履约配送接口文档",
-        "groupbuy-delivery-service Runbook",
+        "groupbuy-groupbuy-delivery-service Runbook",
         "EVENT 告警处理 SOP"
       ],
       "expectedRoute": "EVENT",
