@@ -1,5 +1,9 @@
 # EvoHarnessAlert 运维告警 Agent 平台
 
+简历参考：[项目背景、技术栈与 50 条可组合亮点](docs/resume-bullets.md)，含后端、Agent、RAG、全栈和测试岗位的 4～5 条组合示例。界面与样本：[中文工作台及回放数据](docs/frontend-dataset.md)。
+
+> 源码交付入口：先阅读 [交付说明](DELIVERY.md) 和 [飞书规格与代码对照](docs/spec-code-map.md)。当前为开发快照；本文中的设计方向、生产扩展和容量估算不等于已实现或已验收能力。打包命令：`bash scripts/package-release.sh`。
+
 EvoHarnessAlert 是一个面向生产环境的多 Agent 告警研判与处置平台。它不是重新发明告警规则，也不是替代 SRE 做最终决策，而是在 P0/P1/P2/P3 告警已经被监控系统触发之后，帮助值班人员把告警文本、服务标签、历史事件、Runbook、日志线索、代码线索和指标大盘组织成一份可追溯的证据链报告。
 
 当前代码已经实现：通用 Webhook 接入、Prometheus Alertmanager 接入、P0/P1/P2/P3 优先级归一、PROBLEM/BUSINESS/EVENT/HOST 类型识别、Incident 聚合、Agent Trace、MySQL 持久化、Redis 配置、异步工具队列、Excel 兼容台账、log/SMTP 通知、RAG 知识库基础能力、MCP 工具服务、Skill 状态校验和中文后台控制台。群机器人通知、日志查询 Agent、代码分析 Agent、自动修复 PR、Prompt/Skill 自进化属于生产扩展方向，README 会明确标注。
@@ -8,42 +12,41 @@ EvoHarnessAlert 是一个面向生产环境的多 Agent 告警研判与处置平
 
 这份文档会保留一些英文工程术语，因为代码、接口字段和面试表达里经常会用到；同时给出中文解释，方便第一次读项目的人理解。
 
-| 英文术语 | 中文解释 | 在本项目中的含义 |
-| --- | --- | --- |
-| Alert | 告警 | 监控系统触发的一条异常信号，例如错误率过高、磁盘水位过高。 |
-| Severity / Priority | 告警优先级 | P0/P1/P2/P3，P0 最紧急，P3 最低。 |
-| P0 | 最高优先级 | 核心链路中断、全站不可用、重大资损等，需要立即应急响应。 |
-| P1 | 高优先级 | 核心服务或重要业务明显受影响，需要立即通知值班人员。 |
-| P2 | 中优先级 | 需要进入事件跟踪，但通常不需要全员应急。 |
-| P3 | 低优先级 | 信息类或低影响告警，主要用于台账和趋势观察。 |
-| PROBLEM | 问题/故障类告警 | 接口报错、服务不可用、依赖超时、空指针异常等。 |
-| BUSINESS | 业务指标类告警 | 订单量、支付成功率、券核销率、转化率等业务指标异常。 |
-| EVENT | 事件/变更类告警 | 发布、配置变更、扩缩容、定时任务、依赖切换。 |
-| HOST | 主机/基础设施类告警 | CPU、内存、磁盘、网络、容器重启、节点异常。 |
-| Incident | 故障事件 / 处置事件 | 多条相关 Alert 聚合后的事件，值班人员真正跟进的是 Incident。 |
-| Fingerprint | 告警指纹 | 用于判断两条告警是否相同或相关的稳定标识。 |
-| Runbook | 排障手册 | 针对某类故障的标准排查步骤和止血动作。 |
-| SOP | 标准作业流程 | Standard Operating Procedure，团队约定好的操作规范。 |
-| RAG | 检索增强生成 | 先从知识库检索相关资料，再让大模型基于资料生成回答。 |
-| Embedding | 向量化 | 把文本转换成向量，便于计算语义相似度。 |
-| Chunk | 文档切片 | 把长文档按标题、段落、接口等切成较小片段。 |
-| BM25 | 关键词检索算法 | 适合匹配接口名、错误码、类名、方法名等精确词。 |
-| Rerank | 重排 | 对召回的候选文档重新排序，把最相关的放前面。 |
-| HNSW | 向量索引算法 | 常见近似最近邻检索结构，适合大规模向量搜索。 |
-| MCP | 模型工具协议 | Model Context Protocol，让 Agent 标准化调用外部工具。 |
-| Skill | 技能文件 | 可检查、可测试、可维护的 Prompt/流程资产。 |
-| ToolJob | 工具任务 | 需要异步执行的动作，例如写台账、发通知。 |
-| LedgerRecord | 台账记录 | Ledger 是台账/账本的意思，这里记录告警处理留痕。 |
-| NotificationRecord | 通知记录 | 邮件、SMTP、IM 群机器人、电话等通知动作的执行结果。 |
-| IM Bot / ChatOps | 群机器人 / 聊天运维 | 值班群里 @机器人 后，机器人把告警转给后端研判，再把报告回传群聊。 |
-| TraceId | 请求链路 ID | 一次请求穿过多个微服务时的关联标识，用来串起日志、调用链和代码路径。 |
-| DeadLetter | 死信记录 | 工具任务多次失败后进入死信，方便人工排查。 |
-| Trace | 轨迹 / 审计链 | 记录 Agent 每一步动作、证据和结论。 |
-| Harness | 编排外壳 / 工程检查器 | 线上 Harness 管业务编排；工程 Harness 管测试验收。 |
-| Runtime | 运行时 | 多 Agent 执行、调度、共享黑板和事件流转的核心。 |
-| Blackboard | 黑板 | 多 Agent 共享的结构化状态，包含任务、证据、结论。 |
-| Claim-based Scheduler | 认领式调度器 | 让合适的 Agent 根据能力认领任务，而不是固定流水线。 |
-
+| 英文术语              | 中文解释              | 在本项目中的含义                                                     |
+| --------------------- | --------------------- | -------------------------------------------------------------------- |
+| Alert                 | 告警                  | 监控系统触发的一条异常信号，例如错误率过高、磁盘水位过高。           |
+| Severity / Priority   | 告警优先级            | P0/P1/P2/P3，P0 最紧急，P3 最低。                                    |
+| P0                    | 最高优先级            | 核心链路中断、全站不可用、重大资损等，需要立即应急响应。             |
+| P1                    | 高优先级              | 核心服务或重要业务明显受影响，需要立即通知值班人员。                 |
+| P2                    | 中优先级              | 需要进入事件跟踪，但通常不需要全员应急。                             |
+| P3                    | 低优先级              | 信息类或低影响告警，主要用于台账和趋势观察。                         |
+| PROBLEM               | 问题/故障类告警       | 接口报错、服务不可用、依赖超时、空指针异常等。                       |
+| BUSINESS              | 业务指标类告警        | 订单量、支付成功率、券核销率、转化率等业务指标异常。                 |
+| EVENT                 | 事件/变更类告警       | 发布、配置变更、扩缩容、定时任务、依赖切换。                         |
+| HOST                  | 主机/基础设施类告警   | CPU、内存、磁盘、网络、容器重启、节点异常。                          |
+| Incident              | 故障事件 / 处置事件   | 多条相关 Alert 聚合后的事件，值班人员真正跟进的是 Incident。         |
+| Fingerprint           | 告警指纹              | 用于判断两条告警是否相同或相关的稳定标识。                           |
+| Runbook               | 排障手册              | 针对某类故障的标准排查步骤和止血动作。                               |
+| SOP                   | 标准作业流程          | Standard Operating Procedure，团队约定好的操作规范。                 |
+| RAG                   | 检索增强生成          | 先从知识库检索相关资料，再让大模型基于资料生成回答。                 |
+| Embedding             | 向量化                | 把文本转换成向量，便于计算语义相似度。                               |
+| Chunk                 | 文档切片              | 把长文档按标题、段落、接口等切成较小片段。                           |
+| BM25                  | 关键词检索算法        | 适合匹配接口名、错误码、类名、方法名等精确词。                       |
+| Rerank                | 重排                  | 对召回的候选文档重新排序，把最相关的放前面。                         |
+| HNSW                  | 向量索引算法          | 常见近似最近邻检索结构，适合大规模向量搜索。                         |
+| MCP                   | 模型工具协议          | Model Context Protocol，让 Agent 标准化调用外部工具。                |
+| Skill                 | 技能文件              | 可检查、可测试、可维护的 Prompt/流程资产。                           |
+| ToolJob               | 工具任务              | 需要异步执行的动作，例如写台账、发通知。                             |
+| LedgerRecord          | 台账记录              | Ledger 是台账/账本的意思，这里记录告警处理留痕。                     |
+| NotificationRecord    | 通知记录              | 邮件、SMTP、IM 群机器人、电话等通知动作的执行结果。                  |
+| IM Bot / ChatOps      | 群机器人 / 聊天运维   | 值班群里 @机器人 后，机器人把告警转给后端研判，再把报告回传群聊。    |
+| TraceId               | 请求链路 ID           | 一次请求穿过多个微服务时的关联标识，用来串起日志、调用链和代码路径。 |
+| DeadLetter            | 死信记录              | 工具任务多次失败后进入死信，方便人工排查。                           |
+| Trace                 | 轨迹 / 审计链         | 记录 Agent 每一步动作、证据和结论。                                  |
+| Harness               | 编排外壳 / 工程检查器 | 线上 Harness 管业务编排；工程 Harness 管测试验收。                   |
+| Runtime               | 运行时                | 多 Agent 执行、调度、共享黑板和事件流转的核心。                      |
+| Blackboard            | 黑板                  | 多 Agent 共享的结构化状态，包含任务、证据、结论。                    |
+| Claim-based Scheduler | 认领式调度器          | 让合适的 Agent 根据能力认领任务，而不是固定流水线。                  |
 
 ## 1. 项目简介与简历写法
 
@@ -84,22 +87,21 @@ EvoHarnessAlert 是一个面向生产环境的多 Agent 告警研判与处置平
 
 后续可以扩展 SECURITY 和 DATA。SECURITY 用于安全告警，DATA 用于数据链路、指标口径和数据质量告警。
 
-
 具体 case 可以这样理解：
 
-| 优先级 | 中文解释 | 典型 case | 系统动作 |
-| --- | --- | --- | --- |
-| P0 | 最高优先级 | 到店餐饮下单、支付、核销核心链路大面积不可用，错误率超过 60%。 | 立即创建 Incident，通知值班群和负责人，生成证据链报告，建议拉起应急。 |
-| P1 | 高优先级 | 团购券核销接口失败率 20%，多个城市商家反馈无法核销。 | 创建 Incident，发送通知，查日志、Trace、代码和业务大盘。 |
-| P2 | 中优先级 | 优惠券同步任务延迟 30 分钟，暂未确认用户侧影响。 | 创建 Incident，进入值班处理队列，优先查任务和数据延迟。 |
-| P3 | 低优先级 | 单个容器重启一次后恢复，业务指标未异常。 | 记录台账和趋势，默认不打扰值班人员。 |
+| 优先级 | 中文解释   | 典型 case                                                      | 系统动作                                                              |
+| ------ | ---------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| P0     | 最高优先级 | 到店餐饮下单、支付、核销核心链路大面积不可用，错误率超过 60%。 | 立即创建 Incident，通知值班群和负责人，生成证据链报告，建议拉起应急。 |
+| P1     | 高优先级   | 团购券核销接口失败率 20%，多个城市商家反馈无法核销。           | 创建 Incident，发送通知，查日志、Trace、代码和业务大盘。              |
+| P2     | 中优先级   | 优惠券同步任务延迟 30 分钟，暂未确认用户侧影响。               | 创建 Incident，进入值班处理队列，优先查任务和数据延迟。               |
+| P3     | 低优先级   | 单个容器重启一次后恢复，业务指标未异常。                       | 记录台账和趋势，默认不打扰值班人员。                                  |
 
-| 类型 | 中文解释 | 输入示例 | 处理链路 |
-| --- | --- | --- | --- |
-| PROBLEM | 问题/故障类 | `P1 问题告警：coupon-service 核销接口 NullPointerException` | 查日志 -> 查 Trace -> 看代码 -> 查服务大盘 -> 检索 Runbook。 |
-| BUSINESS | 业务指标类 | `P0 业务告警：支付成功率从 98% 降到 65%` | 查业务大盘 -> 查指标口径 -> 查上下游漏斗 -> 通知业务 Owner。 |
-| EVENT | 事件/变更类 | `P1 事件告警：发布后订单创建错误率升高` | 关联发布/配置/扩缩容 -> 判断影响 -> 建议回滚或暂停变更。 |
-| HOST | 主机/基础设施类 | `P1 主机告警：磁盘使用率 96%，日志写入失败风险` | 查 CPU/内存/磁盘/网络 -> 定位进程/容器 -> 摘流或迁移。 |
+| 类型     | 中文解释        | 输入示例                                                      | 处理链路                                                     |
+| -------- | --------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| PROBLEM  | 问题/故障类     | `P1 问题告警：coupon-service 核销接口 NullPointerException` | 查日志 -> 查 Trace -> 看代码 -> 查服务大盘 -> 检索 Runbook。 |
+| BUSINESS | 业务指标类      | `P0 业务告警：支付成功率从 98% 降到 65%`                    | 查业务大盘 -> 查指标口径 -> 查上下游漏斗 -> 通知业务 Owner。 |
+| EVENT    | 事件/变更类     | `P1 事件告警：发布后订单创建错误率升高`                     | 关联发布/配置/扩缩容 -> 判断影响 -> 建议回滚或暂停变更。     |
+| HOST     | 主机/基础设施类 | `P1 主机告警：磁盘使用率 96%，日志写入失败风险`             | 查 CPU/内存/磁盘/网络 -> 定位进程/容器 -> 摘流或迁移。       |
 
 ### 2.2 SSE 流式对话
 
@@ -222,7 +224,6 @@ curl -X POST http://127.0.0.1:8080/api/alerts/prometheus   -H 'Content-Type: app
 
 当前代码在 `app/services/alerting.py` 的 `handling_steps()` 中记录不同类型的 Agent 步骤；日志、代码、指标工具目前标记为“待接入工具”，知识库和 Trace 已经落库。
 
-
 ### 4.4 群机器人 / ChatOps 流程
 
 生产里很多告警不是从后台页面发起的，而是人在值班群里粘贴一段原始告警文本并 @群机器人。这个入口可以理解为 ChatOps，也就是“在聊天工具里完成运维动作”。当前代码已经有 Webhook 和通知记录能力，群机器人属于生产扩展方向，推荐链路是：
@@ -295,19 +296,19 @@ viewer / viewer123
 
 关键配置在 `app/core/config.py` 和 `.env.example` 中：
 
-| 配置项 | 中文含义 | 当前默认 |
-| --- | --- | --- |
-| `DATABASE_URL` | MySQL 连接串 | `mysql+pymysql://evoalert:evoalert@127.0.0.1:13306/evoharness_alert` |
-| `REDIS_URL` | Redis 连接串 | `redis://127.0.0.1:16379/0` |
-| `AI_PROVIDER` | 大模型供应商 | `mock`，可切换 `ollama` 或 `openai` |
-| `OLLAMA_MODEL` | 本地模型名 | `evoharness-alert-qwen2.5-7b:latest` |
-| `OPENAI_MODEL` | OpenAI-compatible 模型名 | `gpt-4o-mini` |
-| `KNOWLEDGE_CHUNK_SIZE` | 知识库切片长度 | 512 字符 |
-| `KNOWLEDGE_CHUNK_OVERLAP` | 切片重叠长度 | 64 字符 |
-| `REDIS_MEMORY_TTL_SECONDS` | Redis 短期记忆过期时间 | 86400 秒，即 1 天 |
-| `TOOL_QUEUE_BATCH_SIZE` | 队列每轮拉取任务数 | 10 |
-| `TOOL_QUEUE_MAX_ATTEMPTS` | 工具任务最大重试次数 | 3 |
-| `ALERT_EMAIL_RATE_LIMIT_PER_MINUTE` | 通知限流 | 每分钟 30 条 |
+| 配置项                                | 中文含义                 | 当前默认                                                               |
+| ------------------------------------- | ------------------------ | ---------------------------------------------------------------------- |
+| `DATABASE_URL`                      | MySQL 连接串             | `mysql+pymysql://evoalert:evoalert@127.0.0.1:13306/evoharness_alert` |
+| `REDIS_URL`                         | Redis 连接串             | `redis://127.0.0.1:16379/0`                                          |
+| `AI_PROVIDER`                       | 大模型供应商             | `mock`，可切换 `ollama` 或 `openai`                              |
+| `OLLAMA_MODEL`                      | 本地模型名               | `evoharness-alert-qwen2.5-7b:latest`                                 |
+| `OPENAI_MODEL`                      | OpenAI-compatible 模型名 | `gpt-4o-mini`                                                        |
+| `KNOWLEDGE_CHUNK_SIZE`              | 知识库切片长度           | 512 字符                                                               |
+| `KNOWLEDGE_CHUNK_OVERLAP`           | 切片重叠长度             | 64 字符                                                                |
+| `REDIS_MEMORY_TTL_SECONDS`          | Redis 短期记忆过期时间   | 86400 秒，即 1 天                                                      |
+| `TOOL_QUEUE_BATCH_SIZE`             | 队列每轮拉取任务数       | 10                                                                     |
+| `TOOL_QUEUE_MAX_ATTEMPTS`           | 工具任务最大重试次数     | 3                                                                      |
+| `ALERT_EMAIL_RATE_LIMIT_PER_MINUTE` | 通知限流                 | 每分钟 30 条                                                           |
 
 对于七八十个人同时在线的现实场景，可以按“控制台查询 + 少量告警投递 + 异步工具执行”估算。告警接入本身是轻请求，主要压力在数据库写入、RAG 检索和大模型调用。建议生产部署时：
 
@@ -319,6 +320,16 @@ viewer / viewer123
 
 上下文窗口不是越大越好。即使接 Kimi K2 这类长上下文模型，也建议把一轮报告控制在 1 万到 2 万 tokens 内：告警原文 500，日志 4000，代码 6000，指标 1500，Runbook 3000，历史事件 2000，Prompt 与输出格式 1000。这样更可控，也更接近线上成本约束。
 
+Token 和字符的换算参考（粗略工程口径，实际以各家 tokenizer 为准）：
+
+| 内容类型 | 经验换算 | 例子 |
+| --- | --- | --- |
+| 中文文本 | 1 个汉字 ≈ 0.6 - 0.75 tokens；工程保守估算按 1 汉字 ≈ 0.75 tokens，即 1 token ≈ 1.3 个汉字 | "核销接口失败率升高"（9 字）≈ 7 tokens |
+| 英文/代码 | 1 token ≈ 4 个字符 ≈ 0.75 个英文单词 | `NullPointerException`（20 字符）≈ 4 - 6 tokens |
+| 中英混合（日志/告警常见） | 1 token ≈ 1 个汉字或 4 个英文字符，粗略按 1 token ≈ 1.5 字符 | 一条 600 字符的日志 ≈ 400 tokens |
+| 数字/标点/JSON 结构 | 密度高，1 字符 ≈ 0.3 - 0.5 tokens | JSON labels 一段 200 字符 ≈ 80 tokens |
+
+为什么能省？中文里常用词组（"告警""核销""失败率"）会被 BPE 合并成 1 - 2 个 token，而不是按字切分；代码里的常见标识符和缩进模式也有高压缩比。所以"500 tokens 的告警原文"约等于 650 - 700 个汉字，装得下完整的标题、描述和关键 labels。
 
 ## 6. 多 Agent 协作
 
@@ -345,7 +356,9 @@ Agent 之间的协作方式是黑板式：每个 Agent 不直接把全部上下�
 
 为什么不用一个 Agent 全做？因为告警研判涉及日志、代码、指标、知识库、发布、主机和通知，职责过多会导致 prompt 巨大、证据混乱、难以审计，也很难限制高风险工具权限。拆成多个 Agent 后，每个 Agent 的输入、输出、权限和模型都可以单独控制。
 
-默认事件驱动链路可以这样理解：`UnderstandingAgent` 先产出 intent，`SafetyAgent` 产出 risk，`CoordinatorAgent` 根据 intent/risk 判断是否需要 Context；需要时由 `ContextAgent` 准备 Memory、RAG 和 Skill，`ResponseAgent` 生成候选回复，`SafetyAgent` 再审查候选回复，最后由 `CoordinatorAgent` 采纳最终输出。
+默认事件驱动链路可以这样理解：入口先做**确定性归一**（正则/规则提取 intent、priority、alert_type，发布到黑板，不占用 Agent 认领预算），`CoordinatorAgent` 根据归一结果判断是否需要 Context；需要时由 `ContextAgent` 准备 Memory、RAG 和 Skill，`ResponseAgent` 生成候选回复，`SafetyAgent` 再审查候选回复，最后由 `CoordinatorAgent` 采纳最终输出。
+
+> 设计取舍：意图提取、优先级归一、风险评估这类"规则就能确定性完成"的步骤，不包装成 Agent，也不消耗 claim 预算。Agent 预算只花在真正需要证据收集与模型判断的任务上（上下文准备、候选回复生成、安全审查）。
 
 ContextAgent 不是每轮都执行。普通闲聊、系统能力介绍、接口怎么用、名词解释这类请求仍会做意图判断和安全评估，但不会强行注入企业 RAG 和长历史。只有当 intent 明确是告警研判，或者 risk/priority 达到 Medium 及以上，或者任务显式要求上下文能力时，Coordinator 才会创建 Context 任务。这样可以避免把普通问答“告警化”，也能控制成本和延迟。
 
@@ -366,7 +379,6 @@ load_history
 
 Context artifact 可以包含：`memory_brief`、`model_history`、`knowledge_query`、`retrieved_knowledge`、`skill_context`、`primary_memory_key`。后面的 ResponseAgent 会读取这个 artifact，把记忆摘要、知识片段和 Skill 指引合进候选回复 prompt。
 
-
 ## 7. 事件驱动 Runtime
 
 ### 7.1 Runtime 的入口是 Factory
@@ -383,13 +395,13 @@ app/agents/factory.py
 
 默认配置在 `app/core/config.py`：
 
-| 配置 | 中文含义 | 默认值 |
-| --- | --- | --- |
-| `AGENT_FRAMEWORK` | Agent 框架类型 | `event_driven_multi_agent` |
-| `AGENT_RUNTIME_MAX_STEPS` | Coordinator 最大轮数 | `8` |
-| `AGENT_RUNTIME_MAX_CLAIMS_PER_ROUND` | 每轮最多选择多少个 claim | `4` |
-| `AGENT_RUNTIME_MAX_CLAIMS_PER_AGENT` | 同一个 Agent 最多 claim 几次 | `3` |
-| `AGENT_FINAL_ACCEPT_MIN_CONFIDENCE` | 最终采纳的最低置信度 | `0.6` |
+| 配置                                   | 中文含义                     | 默认值                       |
+| -------------------------------------- | ---------------------------- | ---------------------------- |
+| `AGENT_FRAMEWORK`                    | Agent 框架类型               | `event_driven_multi_agent` |
+| `AGENT_RUNTIME_MAX_STEPS`            | Coordinator 最大轮数         | `8`                        |
+| `AGENT_RUNTIME_MAX_CLAIMS_PER_ROUND` | 每轮最多选择多少个 claim     | `4`                        |
+| `AGENT_RUNTIME_MAX_CLAIMS_PER_AGENT` | 同一个 Agent 最多 claim 几次 | `3`                        |
+| `AGENT_FINAL_ACCEPT_MIN_CONFIDENCE`  | 最终采纳的最低置信度         | `0.6`                      |
 
 这些值决定 Runtime 的边界：它不是无限循环。Coordinator 最多跑 8 轮，每轮最多选择 4 个 claim，同一个 Agent 最多 claim 3 次。候选回复的 confidence 低于 0.6 时，即使 SafetyAgent 审查通过，也不应该被最终采纳。当前 `/api/agent/status` 会暴露这些预算配置，方便后台确认运行边界。
 
@@ -494,15 +506,15 @@ flowchart TD
 
 核心数据结构：
 
-| 数据结构 | 中文解释 | 例子 |
-| --- | --- | --- |
-| `AgentTask` | 待办事项 | 理解输入、评估风险、准备上下文、生成候选回复、审查候选回复。 |
-| `AgentArtifact` | 结构化产物 | Intent、Risk、Context、Response Proposal、Safety Review。 |
-| `AgentMessage` | Agent 协作消息 | ResponseAgent 请求 SafetyAgent 审查候选回复。 |
-| `AgentEvent` | 协作事件 | 任务创建、任务认领、Artifact 发布、安全覆盖、最终采纳。 |
-| `AgentTurnResult` | 单个 Agent 一次执行结果 | 本轮新增的消息、产物、任务和是否关闭当前任务。 |
+| 数据结构            | 中文解释                | 例子                                                         |
+| ------------------- | ----------------------- | ------------------------------------------------------------ |
+| `AgentTask`       | 待办事项                | 理解输入、评估风险、准备上下文、生成候选回复、审查候选回复。 |
+| `AgentArtifact`   | 结构化产物              | Intent、Risk、Context、Response Proposal、Safety Review。    |
+| `AgentMessage`    | Agent 协作消息          | ResponseAgent 请求 SafetyAgent 审查候选回复。                |
+| `AgentEvent`      | 协作事件                | 任务创建、任务认领、Artifact 发布、安全覆盖、最终采纳。      |
+| `AgentTurnResult` | 单个 Agent 一次执行结果 | 本轮新增的消息、产物、任务和是否关闭当前任务。               |
 
-典型 artifact：UnderstandingAgent 发布 `intent`，SafetyAgent 发布 `risk` 或 `safety_override`，ContextAgent 发布 `context`，ResponseAgent 发布 `response_proposal`，SafetyAgent 审查后发布 `safety_review`。
+典型 artifact：Coordinator 归一化后直接发布确定性的 `intent` 与 `risk`（owner=CoordinatorAgent，normalizedBy=rule），ContextAgent 发布 `context`，ResponseAgent 发布 `response_proposal`，SafetyAgent 审查后发布 `safety_review`。
 
 黑板方法大多返回新对象，不直接修改旧对象。例如 `add_task()`、`append_event()`、`add_artifact()` 都会返回新的 `CollaborationBlackboard`。这样 Trace 看到的是一串真实发生过的协作记录，而不是一个被不断覆盖的状态对象。测试里也覆盖了这一点：旧 board 不会因为新 task、event 或 artifact 被改掉。
 
@@ -519,15 +531,14 @@ flowchart TD
 -> 达到最终采纳或耗尽轮数预算后结束
 ```
 
-`derive_missing_work` 会看黑板上缺哪些 artifact，然后补对应任务：
+`derive_missing_work` 会看黑板上缺哪些 artifact，然后补对应任务。注意：`intent` 和 `risk` 由 `publish_normalized_facts()` 在每轮开始前以确定性规则直接发布，不再是 Agent 任务：
 
-| 缺失内容 | 派生任务 | 所需能力 | 期望产物 |
-| --- | --- | --- | --- |
-| 缺 intent | `task_understand` | UNDERSTANDING | `intent` |
-| 缺 risk | `task_assess_safety` | SAFETY | `risk` |
-| intent/risk 表明需要上下文 | `task_gather_context` | CONTEXT | `context` |
-| intent/risk 已具备 | `task_response` | RESPONSE | `response_proposal` |
-| 新候选回复未审查 | `task_review_response` | SAFETY | `safety_review` |
+| 缺失内容                   | 派生任务                 | 所需能力      | 期望产物              |
+| -------------------------- | ------------------------ | ------------- | --------------------- |
+| intent/risk（确定性发布，无任务） | —（publish_normalized_facts） | —（规则）     | `intent` / `risk`   |
+| intent/risk 表明需要上下文 | `task_gather_context`  | CONTEXT       | `context`           |
+| intent/risk 已具备         | `task_response`        | RESPONSE      | `response_proposal` |
+| 新候选回复未审查           | `task_review_response` | SAFETY        | `safety_review`     |
 
 最终采纳不是 ResponseAgent 说了算。Coordinator 只有在这些条件同时成立时才会调用 `accept_final()`：存在最新 `response_proposal`；存在指向该 proposal 的 `safety_review`；`safety_review.approved=true`；`response_proposal.confidence >= AGENT_FINAL_ACCEPT_MIN_CONFIDENCE`。当前默认阈值是 0.6，轻量 Runtime 中 ResponseAgent 候选回复 confidence 是 0.86，SafetyAgent 审查 confidence 是 0.95，所以审查通过时通常可以被采纳。
 
@@ -535,7 +546,7 @@ flowchart TD
 
 Claim-based Scheduler 的核心思想是“让最合适的 Agent 认领当前任务”。在 `AgentRegistry` 中，系统会遍历剩余 task，先按 required capability 过滤 Agent，再调用 `agent.decide(task, board)`。如果 `AgentDecision.claim=true`，它就进入候选列表，候选列表按 confidence 从高到低排序。
 
-Coordinator 还会综合 task priority、decision confidence 和 agent 名称排序。Runtime 不是固定流水线，不是永远先 Understanding 再 Safety 再 Context 再 Response；真实顺序由任务和 claim 决定。只是因为一轮请求刚开始通常缺 intent 和 risk，所以 UnderstandingAgent 和 SafetyAgent 往往先工作。到了明确告警研判时，ContextAgent 才加入；ResponseAgent 会等 intent 和 risk 至少准备好后再提出候选回复。
+Coordinator 还会综合 task priority、decision confidence 和 agent 名称排序。Runtime 不是固定流水线，不是永远先归一再 Context 再 Response；真实顺序由任务和 claim 决定。因为 intent 和 risk 在每轮开始前就由确定性规则发布好了，ContextAgent 可以在第一轮就加入告警研判；ResponseAgent 等 intent 和 risk 就绪后提出候选回复，SafetyAgent 最后审查。
 
 调度还有预算限制：每轮最多 `AGENT_RUNTIME_MAX_CLAIMS_PER_ROUND=4` 个 claim，同一个 Agent 整个运行最多 `AGENT_RUNTIME_MAX_CLAIMS_PER_AGENT=3` 次，避免某个 Agent 一直认为自己有事做，占满整个 Runtime。
 
@@ -629,12 +640,12 @@ Memory 可以翻译成“记忆”或“上下文记忆”。在 EvoHarnessAlert
 
 Redis 保存短期记忆，当前代码落在 `app/services/memory.py` 的 `RedisShortTermMemoryStore`。接口刻意保持很少：
 
-| 接口 | 中文含义 | 作用 |
-| --- | --- | --- |
-| `append` | 追加消息 | 用 `rpush` 把一条脱敏消息追加到 Redis list。 |
-| `load_recent` | 读取最近消息 | 从 Redis list 读取最近 N 条，默认 40 条。 |
-| `replace` | 整批替换 | 从 MySQL 历史消息恢复最近 40 条后，整批写回 Redis。 |
-| `messages_from_owner_roles` | 按角色读取 | 只取指定 owner/session 下某些 role 的消息，例如 user 和 assistant。 |
+| 接口                          | 中文含义     | 作用                                                                |
+| ----------------------------- | ------------ | ------------------------------------------------------------------- |
+| `append`                    | 追加消息     | 用`rpush` 把一条脱敏消息追加到 Redis list。                       |
+| `load_recent`               | 读取最近消息 | 从 Redis list 读取最近 N 条，默认 40 条。                           |
+| `replace`                   | 整批替换     | 从 MySQL 历史消息恢复最近 40 条后，整批写回 Redis。                 |
+| `messages_from_owner_roles` | 按角色读取   | 只取指定 owner/session 下某些 role 的消息，例如 user 和 assistant。 |
 
 每条 Redis 消息结构非常简单：
 
@@ -672,9 +683,9 @@ Redis 保存短期记忆，当前代码落在 `app/services/memory.py` 的 `Redi
 
 为什么 Agent 私有记忆要单独存在？因为不同 Agent 的中间思路不应该互相污染。LogQueryAgent 关心日志关键字和 traceId，CodeAnalysisAgent 关心代码路径和调用关系，SafetyAgent 关心敏感信息和高风险动作。如果全部混在一个上下文里，模型容易把未验证推测当事实，也会增加越权工具调用风险。
 
-在事件驱动版本里，除了会话短期记忆，还应该有 agent private memory，也就是“Agent 私有记忆”。它不是给用户建长期画像，而是给每个 Agent 保留自己的工作记录。例如 UnderstandingAgent 记录 `intent/topic`，SafetyAgent 记录 `risk_summary/review_approved/reason`，ContextAgent 记录 `context_intent/risk/retrieved_count`，ResponseAgent 记录 `response_mode/intent/risk`。这些记录可以写入隔离 key，格式类似 `agent:{agent_name}:{session_id}`，并复用 `RedisShortTermMemoryStore` 的裁剪、TTL 和脱敏逻辑。
+在事件驱动版本里，除了会话短期记忆，还应该有 agent private memory，也就是“Agent 私有记忆”。它不是给用户建长期画像，而是给每个 Agent 保留自己的工作记录。例如 CoordinatorAgent 记录归一化结果 `intent/priority/alert_type`，SafetyAgent 记录 `risk_summary/review_approved/reason`，ContextAgent 记录 `context_intent/risk/retrieved_count`，ResponseAgent 记录 `response_mode/intent/risk`。这些记录可以写入隔离 key，格式类似 `agent:{agent_name}:{session_id}`，并复用 `RedisShortTermMemoryStore` 的裁剪、TTL 和脱敏逻辑。
 
-私有记忆的价值在于隔离：SafetyAgent 的风险记录不能直接变成客户端话术，ResponseAgent 的表达策略也不应该影响 UnderstandingAgent 的意图判断。后台可以记录 risk、confidence、summary，客户端只应该看到具体告警报告、证据链和处置建议。私有记忆把这些边界留在代码里，而不是只靠 prompt 自觉。
+私有记忆的价值在于隔离：SafetyAgent 的风险记录不能直接变成客户端话术，ResponseAgent 的表达策略也不应该影响归一化结果的客观性。后台可以记录 risk、confidence、summary，客户端只应该看到具体告警报告、证据链和处置建议。私有记忆把这些边界留在代码里，而不是只靠 prompt 自觉。
 
 为什么 List 要压缩？因为告警、日志、代码、指标、历史事件都可能很长，不控制长度就会让 Redis 和模型上下文一起膨胀。Redis list 只保留最近 40 条，模型输入再做二次筛选：旧历史压缩为最多 500 字的内部摘要，最近 8 条保留为脱敏原文。压缩后重点保留服务名、时间窗口、traceId、异常指标、代码路径、Runbook 引用和日志证据，丢掉重复闲聊、过期状态和无证据推测。
 
@@ -717,9 +728,9 @@ Alert Client / Webhook / 群机器人
 
 CoordinatorAgent 创建 Root Task，并维护任务板、预算、安全门槛、冲突仲裁和最终采纳。它不负责亲自完成所有分析，而是把任务拆给更合适的 Agent。
 
-UnderstandingAgent 独立理解输入，发布 Intent Artifact。Intent 可以包含：是否是告警、告警类型、业务主题、服务名、接口名、是否需要上下文、是否像普通咨询或系统能力问答。
+**确定性归一（不是 Agent）**：意图识别、优先级/告警类型归一、风险评估由 `publish_normalized_facts()` 用规则直接完成——用户输入的一段告警文本里本来就带着这些信息，正则和映射表就能提取，没必要消耗一次 Agent 认领，也不该让"Agent 决策"出现在本可确定性的地方。
 
-SafetyAgent 独立做风险评估，必要时发布 Safety Override。它还会审查候选回复是否安全：是否泄露敏感信息，是否把推测说成事实，是否建议了未经审批的回滚、重启、扩缩容、部署等高风险动作。
+SafetyAgent 独立审查候选回复是否安全：是否泄露敏感信息，是否把推测说成事实，是否建议了未经审批的回滚、重启、扩缩容、部署等高风险动作。审查涉及语义判断和上下文权衡，是真正值得 Agent 承担的环节。
 
 ContextAgent 在需要时准备 Memory、RAG 和 Skill。它会根据 intent/risk 决定是否加载历史、是否检索知识库、是否注入告警类型对应的 Skill Context。普通 Chat 不会强行进入 RAG，也不会生成告警报告。
 
@@ -744,7 +755,7 @@ EvoHarnessAlert 的做法是：模型只在受控任务中产出 artifact 或候
 
 单 Agent 大 Prompt 的问题是职责混乱：同一个模型既要判断意图，又要查知识库，又要写回复，还要决定是否调用工具。prompt 会越来越长，安全边界也会越来越模糊。
 
-黑板式多 Agent 的优点是边界清楚：UnderstandingAgent 只负责理解，SafetyAgent 只负责风险和审查，ContextAgent 只负责上下文，ResponseAgent 只负责候选回复，CoordinatorAgent 只负责调度和采纳。每一步都能写入 Trace，后续复盘时可以看到 intent、risk、RAG、response、prompt 的完整过程。
+黑板式多 Agent 的优点是边界清楚：确定性归一（规则，非 Agent）只负责提取和评估，SafetyAgent 只负责安全审查，ContextAgent 只负责上下文，ResponseAgent 只负责候选回复，CoordinatorAgent 只负责调度和采纳。每一步都能写入 Trace，后续复盘时可以看到 intent、risk、RAG、response、prompt 的完整过程。
 
 这也是本项目的核心取舍：不是把工具选择权完全交给大模型，而是让模型在受控任务里产出结构化结果，再由 Runtime、Harness 和 Tool Queue 接管安全、报告和工具执行。
 
@@ -769,7 +780,6 @@ EvoHarnessAlert 的做法是：模型只在受控任务中产出 artifact 或候
 一个更贴近到店餐饮的例子是公开接口文档的接口文档形态。公开页面可以作为接口文档结构参考，例如[到店餐饮]()和[团购](https://developer.meituan.com/docs/biz/biz_tuangoung_e9e35039-f3f8-4fae-8950-c9f6c96a604c)这类文档。本文档不假设能访问企业内部实现细节，只把它们作为“接口文档、业务名词、API 列表、图片说明、参数解释”这类知识库来源的例子。
 
 到店餐饮可能覆盖团购、闪惠、餐饮预定、顾客自助点餐、自助核销、品牌会员卡、团购履约配送、到店自提等业务。告警出现时，RAG 不只要知道某个接口怎么调用，还要知道这个接口属于哪条业务链路、上下游是谁、错误码代表什么、失败会影响商家还是消费者。
-
 
 ### 12.2 文档采集和清洗
 
@@ -947,11 +957,11 @@ Skill 可以翻译成“技能文件”或“处理策略资产”。它不是�
 
 Skill 状态含义：
 
-| 状态 | 中文解释 | 典型原因 |
-| --- | --- | --- |
-| READY | 可用 | 字段完整，workflow 合法，安全边界存在。 |
-| WARN | 可加载但有警告 | 缺少适用类型、示例或安全边界描述。 |
-| FAIL | 不可用 | 缺 front matter、缺 name、缺 workflow 或 YAML 结构错误。 |
+| 状态  | 中文解释       | 典型原因                                                 |
+| ----- | -------------- | -------------------------------------------------------- |
+| READY | 可用           | 字段完整，workflow 合法，安全边界存在。                  |
+| WARN  | 可加载但有警告 | 缺少适用类型、示例或安全边界描述。                       |
+| FAIL  | 不可用         | 缺 front matter、缺 name、缺 workflow 或 YAML 结构错误。 |
 
 推荐的 Skill 文件结构：
 
@@ -975,14 +985,14 @@ workflow:
 
 按告警类型设计 Skill：
 
-| 告警类型 | 推荐 Skill | 生产排查工作流 |
-| --- | --- | --- |
-| PROBLEM 问题类 | `problem_log_triage`、`problem_code_analysis` | 查日志 -> 查 Trace -> 定位异常栈 -> 找代码模块 -> 查服务大盘 -> 检索 Runbook -> 生成证据链。 |
-| BUSINESS 业务类 | `business_metric_triage`、`business_owner_handoff` | 确认指标口径 -> 查数据延迟 -> 看业务漏斗 -> 比对活动/配置 -> 联系业务 Owner。 |
-| EVENT 事件类 | `event_change_review` | 关联发布/配置/扩缩容/定时任务 -> 判断是否引发异常 -> 建议回滚、暂停变更或继续观察。 |
-| HOST 主机类 | `host_diagnostics` | 查 CPU/内存/磁盘/网络 -> 定位异常进程/容器 -> 摘流、迁移或扩容。 |
-| SECURITY 安全类，扩展 | `security_alert_triage` | 查异常登录、权限变更、攻击流量、密钥风险，走安全升级流程。 |
-| DATA 数据类，扩展 | `data_quality_triage` | 查 ETL、数据延迟、分区、指标口径和数据血缘。 |
+| 告警类型              | 推荐 Skill                                             | 生产排查工作流                                                                               |
+| --------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| PROBLEM 问题类        | `problem_log_triage`、`problem_code_analysis`      | 查日志 -> 查 Trace -> 定位异常栈 -> 找代码模块 -> 查服务大盘 -> 检索 Runbook -> 生成证据链。 |
+| BUSINESS 业务类       | `business_metric_triage`、`business_owner_handoff` | 确认指标口径 -> 查数据延迟 -> 看业务漏斗 -> 比对活动/配置 -> 联系业务 Owner。                |
+| EVENT 事件类          | `event_change_review`                                | 关联发布/配置/扩缩容/定时任务 -> 判断是否引发异常 -> 建议回滚、暂停变更或继续观察。          |
+| HOST 主机类           | `host_diagnostics`                                   | 查 CPU/内存/磁盘/网络 -> 定位异常进程/容器 -> 摘流、迁移或扩容。                             |
+| SECURITY 安全类，扩展 | `security_alert_triage`                              | 查异常登录、权限变更、攻击流量、密钥风险，走安全升级流程。                                   |
+| DATA 数据类，扩展     | `data_quality_triage`                                | 查 ETL、数据延迟、分区、指标口径和数据血缘。                                                 |
 
 Skills 的生产价值是把团队经验沉淀下来。比如一次 P1 核销失败复盘后发现“先查券状态表，再查核销流水，再查幂等键冲突”更有效，就可以把这三步更新进 `coupon_verify_triage` Skill。上线前由 Registry 校验，Harness 评测确认通过，再让 Runtime 在对应告警类型中加载。
 
@@ -1133,3 +1143,214 @@ MySQL 保存长期事实和审计数据，例如告警、事件、任务、通�
 ### 如果接入企业内部知识库/向量库，怎么落地？
 
 把当前 `KnowledgeService` 作为适配层，上游接内部文档、接口平台、Hive/MySQL 同步任务，下游接企业向量库。检索时使用 metadata filter 限制业务线、服务、权限和版本，再做向量召回、BM25 召回和 rerank。
+
+---
+
+## 20. 一条告警的完整运行时序与分支
+
+> 先说清楚两套路径，面试和读代码都要能分得清：
+> - **生产主链路**（当前 `app/services/alerting.py` + `tool_queue`）是**规则驱动**的，告警入库 → 归一化 → 建 Incident → 写 Trace → 入异步工具队列，效率高、可审计。
+> - **多 Agent 运行时**（`app/agents/` 的 `event_driven_multi_agent`）是**黑板 + 认领式调度**的框架骨架，当前 `coordinator._act()` 仍是规则占位（未真正接 LLM/工具），用于沉淀"Conversational 研判入口"和事件驱动协作契约。
+
+### 20.1 生产主链路（权威时序）
+
+```
+外部告警(Webhook/Prometheus Alertmanager)
+  -> POST /api/alerts/webhook | /api/alerts/prometheus   (routes.py)
+  -> AlertIngestService.ingest_webhook / ingest_prometheus (alerting.py)
+      1 归一化: severity/priority -> P0..P3 (normalize_severity)
+      2 识别类型: alert_type -> PROBLEM/BUSINESS/EVENT/HOST (normalize_alert_type / infer_alert_type)
+      3 状态归一: status -> FIRING/RESOLVED (normalize_status)
+      4 建 AlertEvent + 指纹(fingerprint, sha256) 落 MySQL
+      5 按 incident_key 聚合/更新 Incident (_upsert_incident, P0/P1/P2 才建)
+      6 写 AgentRunTrace (_save_trace，含脱敏后的 payload/步骤/证据)
+      7 入队 ToolJob (_enqueue)：LEDGER_WRITE 必做；有 Incident 加 INCIDENT_UPSERT；P0/P1 加 NOTIFICATION_SEND
+  -> ToolQueueDispatcher 轮询 (tool_queue.py)
+      PENDING(run_after<=now) -> RUNNING
+      按 kind 分发给 Excel/Email executor
+      成功 COMPLETED；失败按 max_attempts/retry_delay 重试；超限转 DeadLetter
+  -> 产出 ledger(evoharness-alert-ledger.xlsx) + 通知(log/SMTP) + 报告
+```
+
+### 20.2 告警类型 × 等级的路由矩阵
+
+路由差异主要体现在 `handling_steps(alert_type)`（`alerting.py`）与 Incident 是否创建、是否通知：
+
+| | P0 | P1 | P2 | P3 |
+| --- | --- | --- | --- | --- |
+| 建 Incident | ✅ | ✅ | ✅ | ❌ |
+| 通知值班 | ✅(NOTIFY_SEVERITIES) | ✅(NOTIFY_SEVERITIES) | ❌ | ❌ |
+| PROBLEM | 拉应急；Log+Trace+Code+Metrics+Knowledge | 同左，降级 | 值班窗口跟踪 | 台账 |
+| BUSINESS | 应急；业务大盘+口径+漏斗+Owner | 同左 | 事件跟踪 | 台账 |
+| EVENT | 应急；关联发布/变更+影响判断 | 同左 | 变更观察 | 台账 |
+| HOST | 应急；CPU/内存/磁盘/网络+摘流迁移 | 同左 | 值班窗口 | 台账 |
+
+各类型的 Agent 组合（`handling_steps`）：PROBLEM→`LogQuery/CodeAnalysis/Metrics/Knowledge`；BUSINESS→`BusinessMetric/DataQuality/Knowledge`；EVENT→`ChangeReview/Impact`；HOST→`HostDiagnostic/Metrics/Knowledge`。
+
+### 20.3 重试与超时语义（现状）
+
+- **工具队列**：`tool_queue_max_attempts`(3) + `tool_queue_retry_delay_seconds`(15)，`POLL` 轮询，失败按 `run_after = last_error_at + delay` 重调度，超限转 DeadLetter。
+- **Agent 运行时**：`agent_runtime_max_steps`(8) 轮数预算、`max_claims_per_round`(4)/`max_claims_per_agent`(3) 限流、`final_accept_min_confidence`(0.6) 采纳门槛；预算耗尽触发 `BUDGET_EXHAUSTED` 事件。
+- **缺口**：目前"重试/超时"只覆盖工具队列，**Agent 中间态不落盘**，一旦进程崩溃，这轮研判的黑板状态即丢失。
+
+---
+
+## 21. State / Checkpoint 设计与断点续跑
+
+这是目前最大的设计缺口之一，也是高频面试点。目标：One Alert = 一个可持久化、可续跑的工作流实例。
+
+### 21.1 设计目标
+
+- 把"黑板（CollaborationBlackboard）+ 任务/证据/结论"序列化为一条**运行态记录**，做成**全息 checkpoint**。
+- 任何 Agent 动作可重放、可回滚、可断点续跑到崩溃前一步。
+- 幂等：同一 turn 重复执行不产生副作用的重复（工具调用按 `tool_call_id` 去重）。
+
+### 21.2 需要落盘什么
+
+| 字段 | 内容 | 存储 |
+| --- | --- | --- |
+| `turn_id / alert_id` | 工作流实例主键 | MySQL 主键 |
+| `board_snapshot` | 全部 open/claimed/done 任务、artifacts、优先级 | JSON 列 |
+| `events_log` | ROUN_STARTED/TASK_CREATED/TASK_CLAIMED... 顺序事件 | JSON 列（可追加） |
+| `last_step` / `step_index` | 崩断时进行到哪一步 | 整数列 |
+| `tool_fx_calls` | 已发起的工具调用的 id + 结果 | 表 `agent_tool_call` |
+| `state` | PENDING/RUNNING/WAITING_TOOL/DONE/FAILED | 枚举列 |
+| `attempt` | 断点续跑计数 | 整数列 |
+
+### 21.3 续跑逻辑（checkpoint resume）
+
+```
+拿到一条 PENDING/RUNNING(attempt<max) 的运行记录
+  -> 反序列化 board_snapshot, 重建 CollaborationBlackboard
+  -> 从 last_step/step_index 继续, 跳过已完成 artifact
+  -> 对"已发起的工具调用"按 id 去重, 复用其结果, 避免重复副作用
+  -> 每完成一步事务性写回 board_snapshot + last_step + tool_fx_calls
+  -> 达到 final_accept 或 budget 耗尽 -> 标记 DONE
+```
+
+建议落点：新增 `app/models/entities.RuntimeCheckpoint` + `app/services/checkpoint.py`，在 `EventDrivenCoordinator` 每轮首尾插入 `save()/resume()`。当前 `event_driven_runtime.run()` 只在内存里建黑板，尚未持久化——生产扩展项。
+
+### 21.4 幂等工具调度
+
+工具队列已具备"重试 + 死信 + run_after"，在此基础上补一层 **tool_call_id 去重**即可实现跨崩溃幂等：LEDGER_WRITE/NOTIFICATION_SEND 以 (alert_id, kind, fingerprint) 作为天然去重键。
+
+---
+
+## 22. 大上下文模型：Kimi 百万级 Token 怎么用
+
+你问得对：现在上下文管理很"抠门"。原因不是模型不支持，而是**默认值是为小窗口模型（如 7B/qwen、gpt-4o-mini）调优的**，防止上下文爆长导致费用高、速度慢、检索稀释。看几个关键配置：
+
+| 配置 | 默认 | 说明 |
+| --- | --- | --- |
+| `redis_memory_max_messages` | 40 | 短期记忆只留最近 40 条 |
+| `memory.py` 压缩常量 | 500 字符摘要 | `compact_history_for_prompt`/`summarize_history_for_memory` 把历史压得很短 |
+| `knowledge_top_k` / `candidate_k` | 4 / 16 | RAG 只回 4 段，防止塞爆小窗口 |
+| `agent_runtime_max_steps` | 8 | Agent 轮数预算 |
+
+### 22.1 Kimi(Moonshot) 接入
+
+Kimi 提供 OpenAI 兼容 API，`AiClient` 已有 `openai` provider，无需改代码，改 `.env`：
+
+```
+AI_PROVIDER=openai
+OPENAI_BASE_URL=https://api.moonshot.cn/v1
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=kimi-k2-0905-preview
+```
+
+### 22.2 大窗口下怎么放开
+
+我新增了配置（`config.py`）作为"放大开关"，一键从"小模型省流模式"切到"Kimi 大窗口模式"：
+
+| 配置 | 默认 | 大窗口建议 |
+| --- | --- | --- |
+| `provider_context_window_tokens` | 2 亿 | 与 Kimi 窗口对齐 |
+| `memory_use_full_context` | false | true：不再强制压缩近期消息 |
+| `memory_max_messages_full_context` | 4000 | 把"只留 40 条"放大到完整会话 |
+| `knowledge_top_k_full_context` | 24 | RAG 召回候选翻数倍 |
+
+这样做的收益：保留完整对话/日志上下文、召回更多证据片段，模型"读得多所以判断更准"；代价是每次请求更大、更慢、更贵，所以要配合第 24 节的耗时估算做 ROI 权衡。
+
+> 面试回答模板：**"记忆/上下文长度不是越大越好，而是受模型窗口、成本、延迟和检索稀释四者约束。小窗口模型走压缩+topK=4；接入 Kimi 这类百万级窗口后，我们把记忆限量从 40 条放大到数千条、topK 从 4 放到 24，同时用 checkpoint 保证长流程可续跑。"**
+
+---
+
+## 23. 代码分析沙箱（轻量化本地 + clone）
+
+一条告警往往跨多个微服务，值排 Agent 需要**克隆对应服务代码并静态分析**。生产上为了隔离和安全要走沙箱；本地希望轻量起。落了一个模块：`app/sandbox/sandbox.py`。
+
+### 23.1 双后端
+
+- `sandbox_backend=process`（默认，零依赖）：subprocess + `resource.setrlimit` 限制内存/CPU/超时，适合本地演示与开发。
+- `sandbox_backend=docker`：走 `docker CLI` 起一次性容器，`--memory/--cpus/--network=none` + 目录只读挂载，隔离更强，适合 CI/生产。
+
+### 23.2 用法
+
+```python
+from app.sandbox import create_sandbox
+sb = create_sandbox()
+repo = sb.clone_repo("https://github.com/org/coupon-service.git", branch="main")  # host 侧 clone
+result = sb.execute(["bash", "-c",
+    "grep -rn 'NullPointerException\\|close()' --include=*.java src | head -n 50"],
+    cwd=repo)
+# SandboxResult(exit_code, stdout, stderr, duration_ms, outcome: succeeded/timeout/error)
+```
+
+### 23.3 与 Agent 的衔接（设计）
+
+`handling_steps` 里处于 `待接入工具` 的 `LogQueryAgent/CodeAnalysisAgent` 就是沙箱的消费方；`mcp_tools/server.py` 可加一个 `code_analyze` 工具：入参 = repo/branch/关键字/时间窗口，出参 = `SandboxResult`，作为证据写入 Trace。
+
+### 23.4 安全考虑
+
+- 默认 `--network=none`，沙箱内无网络，避免代码被外带。
+- 只读挂载源码，产物(报告/补丁)从 stdout 回传，不写宿主。
+- `find/head` 限制文件数和输出 20KB，防止回显炸弹。
+
+---
+
+## 24. 耗时估算与多服务并行分析
+
+"分析一轮告警大概要多久？能并行吗？" 这是实打实的容量/SLO 问题。落了一个模块：`app/services/estimation.py`。
+
+### 24.1 串行 + 并行模型
+
+`总耗时 = Σ(串行阶段) + Max(并行波次)`。这里的关键可并行点是：**多个微服务被同一告警波及，各自的沙箱代码分析可以并行**，用线程池按 `estimation_max_parallel`(5) 分成若干波次（wave），把 `N×T_tool` 压成 `ceil(N/parallel)×T_tool`。
+
+```python
+from app.services.estimation import estimate_alert_assessment_time, format_estimate
+from app.core.enums import Severity, AlertType
+print(format_estimate(estimate_alert_assessment_time(
+    Severity.P1, AlertType.PROBLEM,
+    ["coupon-service", "payment-service", "order-service", "deal-service", "biz-platform"])))
+```
+
+### 24.2 分阶段延迟常量（可被观测回写校准）
+
+| 阶段 | 默认 | 含义 |
+| --- | --- | --- |
+| `ESTIMATION_DEFAULT_LLM_MS` | 3000 | 单次大模型调用（含思考/输出） |
+| `ESTIMATION_DEFAULT_RAG_MS` | 500 | 一次 embedding+BM25+rerank 检索 |
+| `ESTIMATION_DEFAULT_TOOL_MS` | 8000 | 一次沙箱启动+代码分析 |
+| `ESTIMATION_MAX_PARALLEL` | 5 | 并行波次宽度 |
+
+按默认值，一条 P1/PROBLEM 波及 5 个服务的单轮预估约 27s（串行 ~18.8s + 并行沙箱 1 波 8s）。若这 5 个服务串行分析则要 18.8 + 40 = 58.8s，并行把整体耗时压了一半以上。
+
+> 落地建议：在 `AlertIngestService` 入库时调用 `estimate_alert_assessment_time` 记录预估，真实遥测（LLM/RAG/沙箱耗时）回写后做回归校准，形成闭环 SLO。
+
+---
+
+## 25. 参考项目与可迁移资产
+
+本项目的 `event_driven_multi_agent` 骨架与参考项目 `mindbridge-py`（同样是事件驱动黑板多 Agent runtime）同源。可直接迁移/对齐的资产：
+
+| mindbridge-py 组件 | 本项目的对应 | 迁移价值 |
+| --- | --- | --- |
+| `EventDrivenAgentRuntimeService.run()` 主运行时 | `app/agents/event_driven_runtime.py` | 已是同结构，可对其补 checkpoint |
+| `EventDrivenCoordinator` 主循环 | `app/agents/coordinator.py` | 已对齐（derive_missing_work / claim / accept_final） |
+| `RedisShortTermMemoryStore` + `compact_history_for_prompt` | `app/services/memory.py` | 已对齐；大模型模式下可绕过压缩 |
+| `MindBridgeAgentHarness.run()` 编排外壳 | `app/agents/harness.py` | 本项目 harness 是占位，可参考其 session→runtime→保存的编排 |
+
+真正值得动手的迁移/增强优先级：
+1. **补 checkpoint + 断点续跑**（第 21 节）——面试必问，也是可靠性短板。
+2. **Agent 运行时真正接入 LLM/RAG/沙箱**——目前 `_act()` 是规则占位，把它接到 `AiClient` + `KnowledgeService` + `CodeSandbox`。
+3. **Kimi 大窗口模式一键切换**（第 22 节）——配置已就位，补记忆检索侧的开关逻辑。

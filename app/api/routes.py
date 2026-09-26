@@ -1,15 +1,18 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.security import current_user, require_admin
 from app.models.entities import UserAccount
-from app.schemas.dtos import AckRequest, AlertIngestResponse, AlertWebhookRequest, IncidentNoteRequest, KnowledgeIngestRequest, KnowledgeIngestResponse, ResolveRequest, authority
+from app.schemas.dtos import AckRequest, AlertIngestResponse, AlertWebhookRequest, ChatRequest, IncidentNoteRequest, KnowledgeIngestRequest, KnowledgeIngestResponse, ResolveRequest, authority
 from app.services.alerting import AlertIngestService, IncidentService
+from app.services.chat import ChatService
 from app.services.knowledge import KnowledgeService
+from app.services.model_assets import finetuned_model_status
 from app.services.report import ReportService
 from app.services.skills import AlertSkillLibrary
 
@@ -50,13 +53,14 @@ def agent_status(user: Annotated[UserAccount, Depends(current_user)]):
         "provider": provider,
         "model": model,
         "realModelEnabled": provider in {"ollama", "openai"},
+        # 微调模型资产自检：GGUF/Modelfile 是否就绪、多大、怎么注册进 Ollama
+        "finetunedModel": finetuned_model_status(settings),
         "agentFramework": {"requested": settings.agent_framework, "active": "event_driven_multi_agent", "available": ["event_driven_multi_agent"], "fallback": False},
         "agents": [
-            {"name": "CoordinatorAgent", "status": "READY", "description": "编排单条告警研判和事件收敛"},
-            {"name": "TriageAgent", "status": "READY", "description": "识别告警类型、严重级别和升级需求"},
-            {"name": "CorrelationAgent", "status": "READY", "description": "根据指纹、标签和资源信息进行去重聚合"},
-            {"name": "ContextAgent", "status": "READY", "description": "检索 runbook、知识库和历史事件"},
+            {"name": "CoordinatorAgent", "status": "READY", "description": "确定性归一、任务板调度与最终采纳"},
+            {"name": "ContextAgent", "status": "READY", "description": "检索 runbook、知识库和会话记忆"},
             {"name": "ResponseAgent", "status": "READY", "description": "生成摘要、影响判断和处置建议"},
+            {"name": "SafetyAgent", "status": "READY", "description": "审查候选回复的安全性与止血建议"},
         ],
         "skills": AlertSkillLibrary.status_items(),
         "loop": {
@@ -68,6 +72,13 @@ def agent_status(user: Annotated[UserAccount, Depends(current_user)]):
             "scheduler": "claim-based-actor-runtime",
         },
     }
+
+
+@router.post("/api/chat/stream")
+def chat_stream(request: ChatRequest, user: Annotated[UserAccount, Depends(current_user)], db: Annotated[Session, Depends(get_db)]):
+    """对话式排障（SSE 流式）：值班人员贴告警原文或追问根因。"""
+    service = ChatService(db, get_settings())
+    return StreamingResponse(service.stream_chat(user, request), media_type="text/event-stream")
 
 
 @router.get("/api/admin/alerts")

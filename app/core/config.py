@@ -13,12 +13,20 @@ class Settings(BaseSettings):
     ai_provider: str = "mock"
     ai_temperature: float = 0.2
     ai_max_tokens: int = 512
+    ai_trust_env: bool = True
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "evoharness-alert-qwen2.5-7b:latest"
     openai_base_url: str = "https://api.openai.com/v1"
     openai_api_key: str = ""
+    openai_wire_api: str = "chat_completions"
+    openai_responses_stream: bool = False
+    openai_extra_headers: dict[str, str] = {}
     openai_model: str = "gpt-4o-mini"
     openai_embedding_model: str = "text-embedding-3-small"
+    # ---- 微调模型资产（models/ 目录下的 GGUF + Modelfile，供 Ollama 加载）----
+    finetuned_model_dir: str = "models/evoharness-alert-qwen2.5-7b"
+    finetuned_model_file: str = "evoharness-alert-qwen2.5-7b-q4_k_m.gguf"
+    finetuned_model_name: str = "evoharness-alert-qwen2.5-7b:latest"
     database_url: str = "mysql+pymysql://evoalert:evoalert@127.0.0.1:13306/evoharness_alert?charset=utf8mb4"
     redis_url: str = "redis://127.0.0.1:6379/0"
     redis_memory_ttl_seconds: int = 86400
@@ -63,6 +71,30 @@ class Settings(BaseSettings):
     tool_queue_retry_delay_seconds: float = 15.0
     tool_queue_excel_workers: int = 1
     tool_queue_email_workers: int = 2
+
+    # ---- 大上下文模型（Kimi / Moonshot 等 OpenAI 兼容服务） ----
+    # Kimi 类模型上下文窗口很大，可把记忆容量与 RAG topK 放大，减少截断。
+    provider_context_window_tokens: int = 2_000_000  # Kimi-K2 的 200 万 token 上下文窗口上限（2M）；仅作为是否放大检索的记忆/知识开关的阈值参考，不代表每次都塞满
+    memory_use_full_context: bool = False  # True 时不再强制压缩近期消息，直接放入大窗口
+    memory_max_messages_full_context: int = 4000  # 大窗口模型下的 Redis 近期消息上限
+    knowledge_top_k_full_context: int = 24  # 大窗口模型下允许召回更多候选片段
+
+    # ---- 代码分析沙箱 ----
+    # backend 可选 process（本地轻量进程沙箱，内置）或 docker（走 docker CLI 起容器）。
+    sandbox_backend: str = "process"
+    sandbox_image: str = "python:3.11-slim"  # 仅在 docker 后端使用
+    sandbox_network_enabled: bool = False
+    sandbox_timeout_seconds: float = 120.0
+    sandbox_memory_mb: int = 1024
+    sandbox_cpu_quota: float = 1.0
+    sandbox_workspace_dir: str = "data/sandbox"
+    sandbox_git_branch: str = "main"
+
+    # ---- 单轮告警研判耗时估算 ----
+    estimation_default_llm_ms: int = 3000  # 单次大模型调用（含思考）耗时常量
+    estimation_default_rag_ms: int = 500  # 一次知识库检索（embedding+bm25+rerank）耗时常量
+    estimation_default_tool_ms: int = 8000  # 一次沙箱代码分析（含启动）耗时常量
+    estimation_max_parallel: int = 5  # 一次告警最多并行的微服务分析数
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

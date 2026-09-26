@@ -11,6 +11,21 @@ class AiMessage(BaseModel):
     content: str
 
 
+class ChatRequest(BaseModel):
+    """对话式排障请求：用户在会话里输入的告警问题或告警原文。"""
+
+    message: str = Field(min_length=1)
+    sessionId: Optional[str] = None
+
+
+class ChatStreamEvent(BaseModel):
+    """SSE 流式对话事件：meta（会话开始）/ token（增量内容）/ done（结束）。"""
+
+    type: str
+    sessionId: Optional[str] = None
+    content: Optional[str] = None
+
+
 class AlertWebhookRequest(BaseModel):
     source: str = Field(default="webhook", min_length=1)
     externalId: str = ""

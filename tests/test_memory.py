@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import json
+from unittest.mock import Mock
+
+import pytest
+from redis.exceptions import RedisError
+
 from app.core.config import Settings
 from app.services.memory import RedisShortTermMemoryStore, ShortTermMessage, compact_history_for_prompt, summarize_history_for_memory
 
@@ -39,6 +45,49 @@ class FakeRedis:
 
     def execute(self):
         return True
+
+
+def test_load_recent_returns_only_requested_tail():
+    store = RedisShortTermMemoryStore(Settings(_env_file=None), FakeRedis())
+    for index in range(5):
+        store.append("team", "session", "user", f"消息{index}")
+    assert [item.content for item in store.load_recent("team", "session", limit=2)] == ["消息3", "消息4"]
+
+
+@pytest.mark.parametrize("limit", [0, -1])
+def test_nonpositive_memory_limit_returns_no_messages(limit):
+    redis = Mock()
+    store = RedisShortTermMemoryStore(Settings(_env_file=None), redis)
+    assert store.load_recent("team", "session", limit=limit) == []
+    redis.lrange.assert_not_called()
+
+
+def test_cache_reads_skip_corrupt_rows_and_sanitize_again():
+    redis = FakeRedis()
+    store = RedisShortTermMemoryStore(Settings(_env_file=None), redis)
+    redis.rpush(store._key("team", "session"), "broken-json", "null", "[]", json.dumps({"role": "user", "content": "token=secret"}))
+    messages = store.load_recent("team", "session")
+    assert len(messages) == 1
+    assert "secret" not in messages[0].content
+
+
+def test_memory_owner_and_session_are_isolated():
+    store = RedisShortTermMemoryStore(Settings(_env_file=None), FakeRedis())
+    store.append("team-a", "session-1", "user", "团购故障")
+    assert store.load_recent("team-b", "session-1") == []
+    assert store.load_recent("team-a", "session-2") == []
+
+
+@pytest.mark.parametrize("method", ["load_recent", "append", "replace"])
+def test_redis_outage_degrades_without_raising(method):
+    redis = Mock()
+    redis.lrange.side_effect = RedisError("断连")
+    redis.rpush.side_effect = RedisError("断连")
+    redis.pipeline.side_effect = RedisError("断连")
+    store = RedisShortTermMemoryStore(Settings(_env_file=None), redis)
+    args = {"load_recent": (), "append": ("user", "告警"), "replace": ([],)}
+    result = getattr(store, method)("team", "session", *args[method])
+    assert result == ([] if method == "load_recent" else None)
 
 
 def test_redis_short_term_memory_append_trims_and_expires():

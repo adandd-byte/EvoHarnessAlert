@@ -1,0 +1,21 @@
+{
+  "source": "webhook",
+  "externalId": "demo-order-p0-001",
+  "fingerprint": "demo-group-buy-order-failure",
+  "title": "团购下单失败率升高",
+  "description": "演示告警：最近 5 分钟下单成功率由 99.8% 降至 65%，出现库存锁定超时。请核验日志、调用链、指标和发布记录；当前没有真实取证结果，不得直接确认根因。",
+  "severity": "P0",
+  "alertType": "problem",
+  "status": "firing",
+  "labels": {
+    "service": "group-buy-order-service",
+    "env": "demo",
+    "instance": "order-demo-01",
+    "owner": "团购交易演示组"
+  },
+  "annotations": {
+    "data_origin": "synthetic_demo",
+    "endpoint": "POST /v1/group-buy/orders",
+    "error_code": "INVENTORY_LOCK_TIMEOUT"
+  }
+}

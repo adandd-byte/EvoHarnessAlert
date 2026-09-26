@@ -1,0 +1,273 @@
+{
+  "schemaVersion": "1.0",
+  "description": "EvoHarnessAlert 规范告警示例数据集，覆盖 P0/P1/P2/P3 × PROBLEM/BUSINESS/EVENT/HOST，含 labels、annotations 与期望研判，对齐 app/services/alerting.py 与 skills/alert_triage 的字段约定。",
+  "alerts": [
+    {
+      "id": "alert-sample-001",
+      "source": "prometheus",
+      "severity": "P0",
+      "alertType": "PROBLEM",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T09:58:00+08:00",
+      "title": "团购券核销核心链路不可用",
+      "description": "coupon-service 的 /coupon/verify 接口 5xx 错误率超过 60%，北京主流量入口全部超时，TraceId=trace-2026090198。",
+      "labels": {"service": "coupon-service", "business": "团购券核销", "endpoint": "/coupon/verify", "city": "北京", "env": "prod", "owner": "到店餐饮值班组", "instance": "coupon-service-7f8c9d", "traceId": "trace-2026090198"},
+      "annotations": {"summary": "团购券核销核心链路不可用", "description": "5xx 错误率超过 60%，多入口超时", "severity": "critical"},
+      "expectedTriage": {
+        "summary": "coupon-service 团购券核销核心链路在 北京 全量不可用，需立即拉应急。",
+        "impact": "北京全部团购券核销用户受影响，存在资损风险。",
+        "rootCauseHint": "可能为数据库/缓存依赖故障或最近一次发布引入，建议从错误日志与 Trace 开始验证。",
+        "runbookHint": "先摘流量止血并启用降级开关，再按日志 -> 代码 -> 大盘 -> 知识库逐层定位。"
+      },
+      "expectedActions": ["立即通知到店餐饮值班组并创建 Incident", "摘除异常实例流量", "启用核销降级/止损开关", "查看错误日志与 Trace 定位根因"]
+    },
+    {
+      "id": "alert-sample-002",
+      "source": "prometheus",
+      "severity": "P1",
+      "alertType": "PROBLEM",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T10:01:00+08:00",
+      "title": "团购套餐接口异常升高",
+      "description": "deal-service 的 /deal/query 接口 5 分钟内失败率超过 20%，日志出现 NullPointerException，TraceId=trace-2026090199。",
+      "labels": {"service": "deal-service", "business": "团购套餐", "endpoint": "/deal/query", "city": "上海", "env": "prod", "owner": "到店餐饮值班组", "instance": "deal-service-1a2b3c", "traceId": "trace-2026090199"},
+      "annotations": {"summary": "团购套餐接口异常升高", "description": "失败率超过 20%，日志出现 NullPointerException", "severity": "high"},
+      "expectedTriage": {
+        "summary": "deal-service 套餐查询接口失败率升高，影响上海团购套餐浏览。",
+        "impact": "上海团购套餐列表页受影响，但非全量。",
+        "rootCauseHint": "疑似接口空指针，建议结合近期代码变更与对应日志堆栈验证。",
+        "runbookHint": "先止损（限流/回滚最近变更）再查日志定位。"
+      },
+      "expectedActions": ["通知到店餐饮值班组", "定位 NPE 堆栈并回滚可疑变更", "在值班窗口内跟踪处理"]
+    },
+    {
+      "id": "alert-sample-003",
+      "source": "prometheus",
+      "alertType": "BUSINESS",
+      "severity": "P1",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T10:05:00+08:00",
+      "title": "在线支付成功率下降",
+      "description": "支付服务支付成功率从 98% 下降至 90%，环比下降 8 个百分点，集中在 华南 区域。",
+      "labels": {"service": "payment-service", "business": "在线支付", "region": "华南", "env": "prod", "owner": "交易平台值班组"},
+      "annotations": {"summary": "支付成功率下降", "description": "支付成功率下降 8 个百分点，集中在华南", "severity": "critical"},
+      "expectedTriage": {
+        "summary": "华南区域支付成功率异常下降，存在资损与客诉风险。",
+        "impact": "华南支付链路受影响，可能造成资损。",
+        "rootCauseHint": "建议核对支付网关、渠道可用性与上下游漏斗，确认是否渠道或限流引起。",
+        "runbookHint": "先确认是否渠道故障并切流，再核对业务指标口径。"
+      },
+      "expectedActions": ["通知交易平台值班组", "核对支付渠道可用性", "必要时切换备用支付渠道"]
+    },
+    {
+      "id": "alert-sample-004",
+      "source": "prometheus",
+      "alertType": "PROBLEM",
+      "severity": "P2",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T10:10:00+08:00",
+      "title": "订单查询延迟升高",
+      "description": "order-service 的 /order/query P99 延迟超过 1.5s，较基线升高 3 倍，持续 10 分钟。",
+      "labels": {"service": "order-service", "business": "订单", "endpoint": "/order/query", "env": "prod", "owner": "订单组", "instance": "order-service-9x8y7z"},
+      "annotations": {"summary": "订单查询延迟升高", "description": "P99 延迟超过 1.5s，升高 3 倍", "severity": "warning"},
+      "expectedTriage": {
+        "summary": "order-service 查询延迟升高，影响订单功能但非全量不可用。",
+        "impact": "订单查询变慢，用户体验下降。",
+        "rootCauseHint": "建议排查数据库慢查询、连接池或下游依赖延迟。",
+        "runbookHint": "进入事件跟踪，值班窗口内处理。"
+      },
+      "expectedActions": ["进入事件跟踪", "查看数据库慢查询与连接池", "检查下游依赖延迟"]
+    },
+    {
+      "id": "alert-sample-005",
+      "source": "prometheus",
+      "alertType": "HOST",
+      "severity": "P2",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T10:15:00+08:00",
+      "title": "节点磁盘使用率超阈值",
+      "description": "生产节点 node-cn-01 磁盘使用率 92%，超过 90% 阈值。",
+      "labels": {"service": "infra", "host": "node-cn-01", "node": "node-cn-01", "env": "prod", "owner": "基础设施组"},
+      "annotations": {"summary": "磁盘使用率超阈值", "description": "磁盘使用率 92% 超过 90% 阈值", "severity": "warning"},
+      "expectedTriage": {
+        "summary": "node-cn-01 磁盘使用率偏高，存在写满风险。",
+        "impact": "该节点所在服务存在磁盘写满导致的容量风险。",
+        "rootCauseHint": "建议排查日志增长、快照与临时文件。",
+        "runbookHint": "清理日志/快照并扩容，按基础设施 Runbook 处理。"
+      },
+      "expectedActions": ["通知基础设施组", "定位并清理大文件/日志", "评估是否需要扩容"]
+    },
+    {
+      "id": "alert-sample-006",
+      "source": "event",
+      "alertType": "EVENT",
+      "severity": "P3",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T11:00:00+08:00",
+      "title": "深圳上线发布变更",
+      "description": "deal-service 在 深圳 执行版本发布 v2.4.1，灰度 10%，观察期 30 分钟。",
+      "labels": {"service": "deal-service", "city": "深圳", "env": "prod", "owner": "到店餐饮值班组"},
+      "annotations": {"summary": "上线发布变更", "description": "灰度 10%，观察期 30 分钟", "severity": "info"},
+      "expectedTriage": {
+        "summary": "deal-service 深圳灰度发布，属事件观察类告警。",
+        "impact": "灰度范围内部分流量切换版本，待观察。",
+        "rootCauseHint": "暂无异常，需在观察期内关注错误率与延迟。",
+        "runbookHint": "关联变更记录，观察指标，必要时暂停或回滚。"
+      },
+      "expectedActions": ["记录事件台账", "观察灰度指标", "异常时暂停并回滚"]
+    },
+    {
+      "id": "alert-sample-007",
+      "source": "prometheus",
+      "alertType": "BUSINESS",
+      "severity": "P0",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T11:05:00+08:00",
+      "title": "GMV 指标异常下降",
+      "description": "业务大盘 GMV 环比下降 40%，伴随支付失败率升高，存在重大资损风险。",
+      "labels": {"service": "biz-platform", "business": "GMV", "env": "prod", "owner": "业务增长组"},
+      "annotations": {"summary": "GMV 指标异常下降", "description": "GMV 环比下降 40%，伴随支付失败", "severity": "critical"},
+      "expectedTriage": {
+        "summary": "GMV 环比下降 40%，伴随支付失败率升高，存在重大资损风险。",
+        "impact": "整体成交额受重大影响，可能涉及资损。",
+        "rootCauseHint": "建议优先核对支付链路与核心交易漏斗，确认资损范围。",
+        "runbookHint": "立即拉应急，先止血止损再定位。"
+      },
+      "expectedActions": ["立即拉起应急响应", "核对资损范围并报告", "优先修复支付与交易链路"]
+    },
+    {
+      "id": "alert-sample-008",
+      "source": "prometheus",
+      "alertType": "HOST",
+      "severity": "P1",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T11:10:00+08:00",
+      "title": "集群节点内存使用率过高",
+      "description": "coupon 集群 60% 节点内存使用率超过 90%，负载持续走高。",
+      "labels": {"service": "coupon-service", "cluster": "coupon-cluster", "env": "prod", "owner": "基础设施组"},
+      "annotations": {"summary": "集群内存使用率过高", "description": "60% 节点内存超过 90%", "severity": "high"},
+      "expectedTriage": {
+        "summary": "coupon 集群多节点内存水位告警，存在宕机与级联风险。",
+        "impact": "coupon 服务容量饱和，可能引发实例重启与级联故障。",
+        "rootCauseHint": "建议检查内存泄漏、流量突增与扩容节奏。",
+        "runbookHint": "先扩容/限流保证可用性，再定位内存问题。"
+      },
+      "expectedActions": ["通知基础设施组", "扩容或限流缓解", "定位内存泄漏"]
+    },
+    {
+      "id": "alert-sample-009",
+      "source": "event",
+      "alertType": "EVENT",
+      "severity": "P2",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T11:20:00+08:00",
+      "title": "定时任务延迟执行",
+      "description": "对账定时任务 job-reconcile 本轮延迟 20 分钟未执行，疑似调度器异常。",
+      "labels": {"service": "scheduler", "job": "reconcile", "env": "prod", "owner": "数据平台组"},
+      "annotations": {"summary": "定时任务延迟执行", "description": "对账任务延迟 20 分钟", "severity": "warning"},
+      "expectedTriage": {
+        "summary": "对账定时任务延迟，可能影响数据对账时效。",
+        "impact": "对账数据延迟，暂不直接影响线上用户。",
+        "rootCauseHint": "建议排查调度器状态与任务未触发原因。",
+        "runbookHint": "确认调度器健康并手动触发补跑。"
+      },
+      "expectedActions": ["确认调度器状态", "手动触发补跑", "评估数据对账偏差"]
+    },
+    {
+      "id": "alert-sample-010",
+      "source": "prometheus",
+      "alertType": "PROBLEM",
+      "severity": "P3",
+      "status": "RESOLVED",
+      "startsAt": "2026-09-01T08:00:00+08:00",
+      "endsAt": "2026-09-01T08:05:00+08:00",
+      "title": "单实例错误日志偶发",
+      "description": "order-service 单实例偶发 3 条 500 错误日志，已自行恢复。",
+      "labels": {"service": "order-service", "env": "prod", "owner": "订单组", "instance": "order-service-1b2c3d"},
+      "annotations": {"summary": "单实例错误日志偶发", "description": "偶发 3 条 500，已恢复", "severity": "info"},
+      "expectedTriage": {
+        "summary": "order-service 偶发错误日志且已恢复，属低风险。",
+        "impact": "无持续影响，单实例瞬时报错。",
+        "rootCauseHint": "建议后续关注是否为瞬时抖动或偶发异常。",
+        "runbookHint": "记录台账，用于趋势观察。"
+      },
+      "expectedActions": ["记录台账", "纳入趋势观察"]
+    },
+    {
+      "id": "alert-sample-011",
+      "source": "prometheus",
+      "alertType": "PROBLEM",
+      "severity": "P1",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T11:30:00+08:00",
+      "title": "数据库连接池耗尽",
+      "description": "order-service 数据库连接池使用率 100%，查询开始排队，存在连接池耗尽风险。",
+      "labels": {"service": "order-service", "db": "order-mysql-master", "env": "prod", "owner": "DBA组"},
+      "annotations": {"summary": "数据库连接池耗尽", "description": "连接池使用率 100%，查询排队", "severity": "high"},
+      "expectedTriage": {
+        "summary": "order-service 数据库连接池耗尽，可能引发核心查询不可用。",
+        "impact": "订单相关查询存在不可用风险。",
+        "rootCauseHint": "建议排查慢 SQL、连接泄漏与流量突增。",
+        "runbookHint": "先扩容连接/限流止血，再定位慢 SQL 与泄漏。"
+      },
+      "expectedActions": ["通知 DBA组", "扩容连接或限流", "定位慢 SQL 与连接泄漏"]
+    },
+    {
+      "id": "alert-sample-012",
+      "source": "prometheus",
+      "alertType": "BUSINESS",
+      "severity": "P2",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T11:40:00+08:00",
+      "title": "外卖订单取消率上升",
+      "description": "外卖订单取消率升至 12%，高于基线 8%，集中在晚高峰。",
+      "labels": {"service": "waimai-service", "business": "外卖订单", "env": "prod", "owner": "外卖组"},
+      "annotations": {"summary": "外卖订单取消率上升", "description": "取消率升至 12%，高于基线", "severity": "warning"},
+      "expectedTriage": {
+        "summary": "外卖订单取消率升高，需对齐口径判断是否业务异常。",
+        "impact": "外卖订单取消增加，可能影响成交与体验。",
+        "rootCauseHint": "建议核对活动/运力/配送时长口径与近期变更。",
+        "runbookHint": "对齐业务口径，联系业务 Owner 确认影响。"
+      },
+      "expectedActions": ["核对业务指标口径", "联系外卖组确认影响", "记录事件跟踪"]
+    },
+    {
+      "id": "alert-sample-013",
+      "source": "prometheus",
+      "alertType": "HOST",
+      "severity": "P3",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T11:50:00+08:00",
+      "title": "节点 CPU 温和升高",
+      "description": "node-sz-03 CPU 使用率 75%，较基线升 20%，无压测任务。",
+      "labels": {"service": "infra", "host": "node-sz-03", "env": "prod", "owner": "基础设施组"},
+      "annotations": {"summary": "节点 CPU 温和升高", "description": "CPU 使用率 75%", "severity": "info"},
+      "expectedTriage": {
+        "summary": "node-sz-03 CPU 温和升高，无明显影响。",
+        "impact": "无直接用户影响。",
+        "rootCauseHint": "建议排查进程与负载来源，确认是否突增流量。",
+        "runbookHint": "记录台账，持续观察。"
+      },
+      "expectedActions": ["记录台账", "排查进程负载来源"]
+    },
+    {
+      "id": "alert-sample-014",
+      "source": "prometheus",
+      "alertType": "PROBLEM",
+      "severity": "P0",
+      "status": "FIRING",
+      "startsAt": "2026-09-01T12:00:00+08:00",
+      "title": "核心数据库不可用",
+      "description": "支付核心库 payment-mysql-master 主库不可用，读写切换中，支付链路中断。",
+      "labels": {"service": "payment-service", "db": "payment-mysql-master", "env": "prod", "owner": "DBA组"},
+      "annotations": {"summary": "核心数据库不可用", "description": "支付核心库主库不可用，支付链路中断", "severity": "critical"},
+      "expectedTriage": {
+        "summary": "支付核心数据库故障，支付链路中断，需立即应急处置。",
+        "impact": "全网支付中断，伴随重大资损风险。",
+        "rootCauseHint": "建议立即检查主库状态、复制链路与触发故障的变更或资源问题。",
+        "runbookHint": "立即拉起应急并止损，执行数据库切换与恢复 Runbook。"
+      },
+      "expectedActions": ["立即拉起应急响应", "执行主从切换/恢复", "评估资损与影响范围"]
+    }
+  ]
+}
