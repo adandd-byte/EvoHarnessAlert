@@ -1021,13 +1021,12 @@ README 中可以使用一次本地 Harness 结果作为讲解样例：
   "topK": 4,
   "recallAtK": 0.9667,
   "precisionAtK": 0.6458,
-  "mrr": 0.9083,
   "ndcgAtK": 0.9053,
   "hitRate": 0.9667
 }
 ```
 
-这组指标的含义是：绝大多数告警都能在前 4 个结果里召回相关文档，且第一个相关文档通常排得比较靠前；Precision@K 相对低一些，说明前 4 个结果里仍有部分噪声，后续可以通过 metadata filter 和 reranker 优化。
+这组指标的含义是：绝大多数告警都能在前 4 个结果里召回相关文档，相关文档的排序质量也保持在较高水平；Precision@K 相对低一些，说明前 4 个结果里仍有部分噪声，后续可以通过 metadata filter 和 reranker 优化。
 
 工程 Harness 分层：
 
